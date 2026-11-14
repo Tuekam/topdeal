@@ -1,0 +1,70 @@
+:root {
+  --td-color-page: #FAF9F7;
+  --td-color-surface: #FFFFFF;
+  --td-color-image-tile: #F1EDE8;
+  --td-color-border: #E7E3DD;
+  --td-color-input-border: #D9D3CB;
+  --td-color-text: #2B221D;
+  --td-color-text-secondary: #6B6159;
+  --td-color-accent: #B8531A;
+  --td-color-error: #A33D35;
+
+  --td-font-sans: var(--font-schibsted-grotesk), Arial, Helvetica, sans-serif;
+  --td-font-weight-regular: 400;
+  --td-font-weight-medium: 500;
+  --td-font-weight-semibold: 600;
+  --td-font-weight-bold: 700;
+  --td-font-size-body: 14px;
+  --td-font-size-label: 14px;
+  --td-font-size-supporting: 12px;
+
+  --td-spacing-page-gutter: 24px;
+  --td-spacing-field-gap: 8px;
+  --td-spacing-field-padding-inline: 12px;
+  --td-spacing-button-padding-inline: 16px;
+  --td-size-content-max-width: 1200px;
+  --td-size-header-height: 76px;
+  --td-size-field-height: 46px;
+  --td-size-button-height: 44px;
+  --td-size-border-width: 1px;
+  --td-radius-card: 12px;
+  --td-radius-field: 12px;
+  --td-radius-search: 12px;
+  --td-radius-button: 10px;
+  --td-radius-label: 6px;
+  --td-radius-full: 50%;
+  --td-shadow-none: none;
+}
+
+@theme inline {
+  --color-page: var(--td-color-page);
+  --color-surface: var(--td-color-surface);
+  --color-image-tile: var(--td-color-image-tile);
+  --color-border: var(--td-color-border);
+  --color-input-border: var(--td-color-input-border);
+  --color-text: var(--td-color-text);
+  --color-text-secondary: var(--td-color-text-secondary);
+  --color-accent: var(--td-color-accent);
+  --color-error: var(--td-color-error);
+  --font-sans: var(--td-font-sans);
+  --font-weight-regular: var(--td-font-weight-regular);
+  --font-weight-medium: var(--td-font-weight-medium);
+  --font-weight-semibold: var(--td-font-weight-semibold);
+  --font-weight-bold: var(--td-font-weight-bold);
+  --text-body: var(--td-font-size-body);
+  --text-label: var(--td-font-size-label);
+  --text-supporting: var(--td-font-size-supporting);
+  --spacing-page-gutter: var(--td-spacing-page-gutter);
+  --spacing-field-gap: var(--td-spacing-field-gap);
+  --spacing-field-padding-inline: var(--td-spacing-field-padding-inline);
+  --spacing-button-padding-inline: var(--td-spacing-button-padding-inline);
+  --container-content: var(--td-size-content-max-width);
+  --spacing-header-height: var(--td-size-header-height);
+  --spacing-field-height: var(--td-size-field-height);
+  --spacing-button-height: var(--td-size-button-height);
+  --radius-card: var(--td-radius-card);
+  --radius-field: var(--td-radius-field);
+  --radius-search: var(--td-radius-search);
+  --radius-button: var(--td-radius-button);
+  --radius-label: var(--td-radius-label);
+}

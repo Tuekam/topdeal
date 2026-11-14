@@ -1,0 +1,16 @@
+
+@import "tailwindcss";
+
+/* Détection des classes du package UI */
+@source "../../../packages/ui";
+
+/* Styles du Design System */
+@import "@topdeal/ui/styles/themes.css";
+@import "@topdeal/ui/styles/components.css";
+
+body {
+  background-color: var(--td-color-page);
+  color: var(--td-color-text);
+  font-family: var(--td-font-sans);
+  font-size: var(--td-font-size-body);
+}

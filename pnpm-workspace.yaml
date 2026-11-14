@@ -1,3 +1,14 @@
+packages:
+  - "apps/*"
+  - "packages/core"
+  - "packages/database"
+  - "packages/ui"
+  - "packages/features/*"
+
 allowBuilds:
+  '@firebase/util': true
+  '@prisma/engines': true
+  prisma: true
+  protobufjs: true
   sharp: false
   unrs-resolver: false

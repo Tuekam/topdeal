@@ -1,0 +1,760 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model administrateur {
+  utilisateur_id        String                  @id @db.Uuid
+  role                  role_admin
+  utilisateur           utilisateur             @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_administrateur_utilisateur")
+  journal_audit         journal_audit[]
+  litige                litige[]
+  paiement              paiement[]
+  remboursement         remboursement[]
+  signalement           signalement[]
+  verification_identite verification_identite[]
+  versement             versement[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model affiliation {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  active            Boolean            @default(true)
+  remuneration_fixe Decimal            @db.Decimal(12, 2)
+  date_activation   DateTime?          @db.Timestamptz(6)
+  date_modification DateTime?          @db.Timestamptz(6)
+  annonce_id        String             @unique @db.Uuid
+  annonce           annonce            @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_affiliation_annonce")
+  lien_affiliation  lien_affiliation[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model annonce {
+  id                                                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  titre                                               String          @db.VarChar(255)
+  description                                         String?
+  etat                                                etat_article
+  prix                                                Decimal         @db.Decimal(12, 2)
+  quantite                                            Int
+  quartier                                            String?         @db.VarChar(150)
+  troc_accepte                                        Boolean         @default(false)
+  visibilite                                          visibilite
+  disponibilite                                       disponibilite
+  date_publication                                    DateTime?       @db.Timestamptz(6)
+  utilisateur_id                                      String          @db.Uuid
+  categorie_id                                        String          @db.Uuid
+  categorie_souhaitee_id                              String?         @db.Uuid
+  souhait_echange_description                         String?
+  affiliation                                         affiliation?
+  categorie_annonce_categorie_idTocategorie           categorie       @relation("annonce_categorie_idTocategorie", fields: [categorie_id], references: [id], onUpdate: NoAction, map: "fk_annonce_categorie")
+  categorie_annonce_categorie_souhaitee_idTocategorie categorie?      @relation("annonce_categorie_souhaitee_idTocategorie", fields: [categorie_souhaitee_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_annonce_categorie_souhaitee")
+  utilisateur                                         utilisateur     @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_annonce_utilisateur")
+  commande                                            commande[]
+  favori                                              favori[]
+  message                                             message[]
+  photo_annonce                                       photo_annonce[]
+  proposition                                         proposition[]
+  troc_troc_annonce_a_idToannonce                     troc[]          @relation("troc_annonce_a_idToannonce")
+  troc_troc_annonce_b_idToannonce                     troc[]          @relation("troc_annonce_b_idToannonce")
+
+  @@index([categorie_id], map: "idx_annonce_categorie")
+  @@index([categorie_souhaitee_id], map: "idx_annonce_categorie_souhaitee")
+  @@index([visibilite, disponibilite], map: "idx_annonce_recherche")
+  @@index([utilisateur_id], map: "idx_annonce_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model attribution_affiliation {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quantite              Int
+  prix_base_unitaire    Decimal             @db.Decimal(12, 2)
+  remuneration_unitaire Decimal             @db.Decimal(12, 2)
+  prix_final_unitaire   Decimal             @db.Decimal(12, 2)
+  statut                statut_remuneration @default(EN_ATTENTE)
+  commande_id           String              @unique @db.Uuid
+  lien_affiliation_id   String              @db.Uuid
+  versement_id          String?             @unique @db.Uuid
+  commande              commande            @relation(fields: [commande_id], references: [id], onUpdate: NoAction, map: "fk_attribution_commande")
+  lien_affiliation      lien_affiliation    @relation(fields: [lien_affiliation_id], references: [id], onUpdate: NoAction, map: "fk_attribution_lien")
+  versement             versement?          @relation(fields: [versement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_attribution_versement")
+
+  @@index([lien_affiliation_id], map: "idx_attribution_lien")
+}
+
+model categorie {
+  id                                                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nom                                               String      @db.VarChar(150)
+  active                                            Boolean     @default(true)
+  parent_id                                         String?     @db.Uuid
+  annonce_annonce_categorie_idTocategorie           annonce[]   @relation("annonce_categorie_idTocategorie")
+  annonce_annonce_categorie_souhaitee_idTocategorie annonce[]   @relation("annonce_categorie_souhaitee_idTocategorie")
+  categorie                                         categorie?  @relation("categorieTocategorie", fields: [parent_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_categorie_parent")
+  other_categorie                                   categorie[] @relation("categorieTocategorie")
+
+  @@index([parent_id], map: "idx_categorie_parent")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model code_remise {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code_hash       String      @unique @db.VarChar(255)
+  tentatives      Int         @default(0)
+  statut          statut_code @default(ACTIF)
+  date_generation DateTime    @default(now()) @db.Timestamptz(6)
+  date_validation DateTime?   @db.Timestamptz(6)
+  commande_id     String      @unique @db.Uuid
+  commande        commande    @relation(fields: [commande_id], references: [id], onUpdate: NoAction, map: "fk_code_remise_commande")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model commande {
+  id                                            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reference                                     String                   @unique @db.VarChar(100)
+  type                                          type_commande
+  quantite                                      Int
+  prix_unitaire                                 Decimal                  @db.Decimal(12, 2)
+  montant_total                                 Decimal                  @db.Decimal(12, 2)
+  lieu_remise                                   String?                  @db.VarChar(255)
+  heure_remise                                  DateTime?                @db.Timestamptz(6)
+  statut                                        statut_commande          @default(CREEE)
+  date_creation                                 DateTime                 @default(now()) @db.Timestamptz(6)
+  acheteur_id                                   String                   @db.Uuid
+  vendeur_id                                    String                   @db.Uuid
+  annonce_id                                    String                   @db.Uuid
+  attribution_affiliation                       attribution_affiliation?
+  code_remise                                   code_remise?
+  utilisateur_commande_acheteur_idToutilisateur utilisateur              @relation("commande_acheteur_idToutilisateur", fields: [acheteur_id], references: [id], onUpdate: NoAction, map: "fk_commande_acheteur")
+  annonce                                       annonce                  @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_commande_annonce")
+  utilisateur_commande_vendeur_idToutilisateur  utilisateur              @relation("commande_vendeur_idToutilisateur", fields: [vendeur_id], references: [id], onUpdate: NoAction, map: "fk_commande_vendeur")
+  demande_paiement                              demande_paiement[]
+  litige                                        litige[]
+  proposition                                   proposition?
+  remboursement                                 remboursement[]
+  ticket_support                                ticket_support[]
+  troc                                          troc?
+  versement                                     versement[]
+
+  @@index([acheteur_id], map: "idx_commande_acheteur")
+  @@index([annonce_id], map: "idx_commande_annonce")
+  @@index([statut], map: "idx_commande_statut")
+  @@index([vendeur_id], map: "idx_commande_vendeur")
+}
+
+model conversation {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  statut                   statut_conversation        @default(ACTIVE)
+  date_creation            DateTime                   @default(now()) @db.Timestamptz(6)
+  derniere_activite        DateTime?                  @db.Timestamptz(6)
+  message                  message[]
+  participant_conversation participant_conversation[]
+  proposition              proposition[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model demande_paiement {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  montant       Decimal        @db.Decimal(12, 2)
+  operateur     operateur
+  statut        statut_demande @default(EN_ATTENTE)
+  date_creation DateTime       @default(now()) @db.Timestamptz(6)
+  commande_id   String         @db.Uuid
+  commande      commande       @relation(fields: [commande_id], references: [id], onUpdate: NoAction, map: "fk_demande_paiement_commande")
+  paiement      paiement[]
+
+  @@index([commande_id], map: "idx_demande_paiement_commande")
+  @@index([statut], map: "idx_demande_paiement_statut")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ecriture_journal {
+  id                     String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                   type_ecriture
+  sens                   sens_ecriture
+  montant                Decimal            @db.Decimal(12, 2)
+  reference              String             @db.VarChar(255)
+  date_creation          DateTime           @default(now()) @db.Timestamptz(6)
+  paiement_id            String?            @db.Uuid
+  versement_id           String?            @db.Uuid
+  remboursement_id       String?            @db.Uuid
+  corrige_ecriture_id    String?            @db.Uuid
+  ecriture_journal       ecriture_journal?  @relation("ecriture_journalToecriture_journal", fields: [corrige_ecriture_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ecriture_journal_correction")
+  other_ecriture_journal ecriture_journal[] @relation("ecriture_journalToecriture_journal")
+  paiement               paiement?          @relation(fields: [paiement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ecriture_paiement")
+  remboursement          remboursement?     @relation(fields: [remboursement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ecriture_remboursement")
+  versement              versement?         @relation(fields: [versement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ecriture_versement")
+
+  @@index([corrige_ecriture_id], map: "idx_ecriture_journal_correction")
+  @@index([paiement_id], map: "idx_ecriture_paiement")
+  @@index([remboursement_id], map: "idx_ecriture_remboursement")
+  @@index([versement_id], map: "idx_ecriture_versement")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model evenement_outbox {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type             String           @db.VarChar(100)
+  payload          Json
+  statut           statut_evenement @default(EN_ATTENTE)
+  tentatives       Int              @default(0)
+  date_creation    DateTime         @default(now()) @db.Timestamptz(6)
+  date_publication DateTime?        @db.Timestamptz(6)
+}
+
+model favori {
+  utilisateur_id String      @db.Uuid
+  annonce_id     String      @db.Uuid
+  date_ajout     DateTime    @default(now()) @db.Timestamptz(6)
+  annonce        annonce     @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_favori_annonce")
+  utilisateur    utilisateur @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_favori_utilisateur")
+
+  @@id([utilisateur_id, annonce_id], map: "pk_favori")
+  @@index([annonce_id], map: "idx_favori_annonce")
+}
+
+model identite_externe {
+  id                  String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  utilisateur_id      String           @db.Uuid
+  fournisseur         fournisseur_auth
+  identifiant_externe String           @db.VarChar(255)
+  date_creation       DateTime         @default(now()) @db.Timestamptz(6)
+  utilisateur         utilisateur      @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_identite_utilisateur")
+
+  @@unique([fournisseur, identifiant_externe], map: "uq_identite_fournisseur")
+  @@unique([utilisateur_id, fournisseur], map: "uq_identite_utilisateur_fournisseur")
+}
+
+model journal_audit {
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action            String         @db.VarChar(255)
+  objet_type        String         @db.VarChar(100)
+  objet_id          String?        @db.Uuid
+  motif             String?
+  date_action       DateTime       @default(now()) @db.Timestamptz(6)
+  administrateur_id String         @db.Uuid
+  administrateur    administrateur @relation(fields: [administrateur_id], references: [utilisateur_id], onUpdate: NoAction)
+
+  @@index([administrateur_id], map: "idx_journal_audit_administrateur")
+}
+
+model lien_affiliation {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code_unique             String                    @unique @db.VarChar(255)
+  actif                   Boolean                   @default(true)
+  date_creation           DateTime                  @default(now()) @db.Timestamptz(6)
+  affiliation_id          String                    @db.Uuid
+  utilisateur_id          String                    @db.Uuid
+  attribution_affiliation attribution_affiliation[]
+  affiliation             affiliation               @relation(fields: [affiliation_id], references: [id], onUpdate: NoAction, map: "fk_lien_affiliation")
+  utilisateur             utilisateur               @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_lien_utilisateur")
+
+  @@index([affiliation_id], map: "idx_lien_affiliation_affiliation")
+  @@index([utilisateur_id], map: "idx_lien_affiliation_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model litige {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  motif             String
+  description       String
+  decision          String?
+  statut            statut_litige   @default(OUVERT)
+  date_ouverture    DateTime        @default(now()) @db.Timestamptz(6)
+  date_cloture      DateTime?       @db.Timestamptz(6)
+  utilisateur_id    String          @db.Uuid
+  commande_id       String?         @db.Uuid
+  troc_id           String?         @db.Uuid
+  administrateur_id String?         @db.Uuid
+  administrateur    administrateur? @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction)
+  commande          commande?       @relation(fields: [commande_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  troc              troc?           @relation(fields: [troc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  utilisateur       utilisateur     @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction)
+
+  @@index([administrateur_id], map: "idx_litige_administrateur")
+  @@index([commande_id], map: "idx_litige_commande")
+  @@index([statut], map: "idx_litige_statut")
+  @@index([troc_id], map: "idx_litige_troc")
+  @@index([utilisateur_id], map: "idx_litige_utilisateur")
+}
+
+model message {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contenu         String
+  date_envoi      DateTime     @default(now()) @db.Timestamptz(6)
+  date_lecture    DateTime?    @db.Timestamptz(6)
+  conversation_id String       @db.Uuid
+  utilisateur_id  String       @db.Uuid
+  annonce_id      String?      @db.Uuid
+  annonce         annonce?     @relation(fields: [annonce_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_message_annonce")
+  conversation    conversation @relation(fields: [conversation_id], references: [id], onUpdate: NoAction, map: "fk_message_conversation")
+  utilisateur     utilisateur  @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_message_utilisateur")
+
+  @@index([annonce_id], map: "idx_message_annonce", where: raw("(annonce_id IS NOT NULL)"))
+  @@index([conversation_id, date_envoi(sort: Desc)], map: "idx_message_conversation_date")
+  @@index([utilisateur_id], map: "idx_message_utilisateur")
+}
+
+model notification {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type           type_notification
+  contenu        String
+  lue            Boolean           @default(false)
+  date_creation  DateTime          @default(now()) @db.Timestamptz(6)
+  utilisateur_id String            @db.Uuid
+  utilisateur    utilisateur       @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction)
+
+  @@index([utilisateur_id], map: "idx_notification_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model paiement {
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  montant             Decimal            @db.Decimal(12, 2)
+  operateur           operateur
+  reference_operateur String?            @db.VarChar(255)
+  statut              statut_paiement    @default(INITIATED)
+  cle_idempotence     String             @unique @db.VarChar(255)
+  date_initiation     DateTime           @default(now()) @db.Timestamptz(6)
+  date_confirmation   DateTime?          @db.Timestamptz(6)
+  demande_paiement_id String             @db.Uuid
+  administrateur_id   String?            @db.Uuid
+  ecriture_journal    ecriture_journal[]
+  administrateur      administrateur?    @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_paiement_administrateur")
+  demande_paiement    demande_paiement   @relation(fields: [demande_paiement_id], references: [id], onUpdate: NoAction, map: "fk_paiement_demande")
+  remboursement       remboursement?
+
+  @@index([administrateur_id], map: "idx_paiement_administrateur")
+  @@index([demande_paiement_id], map: "idx_paiement_demande")
+  @@index([reference_operateur], map: "idx_paiement_reference_operateur")
+  @@index([statut], map: "idx_paiement_statut")
+}
+
+model participant_conversation {
+  conversation_id String       @db.Uuid
+  utilisateur_id  String       @db.Uuid
+  date_entree     DateTime     @default(now()) @db.Timestamptz(6)
+  conversation    conversation @relation(fields: [conversation_id], references: [id], onUpdate: NoAction, map: "fk_participant_conversation")
+  utilisateur     utilisateur  @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction, map: "fk_participant_utilisateur")
+
+  @@id([conversation_id, utilisateur_id], map: "pk_participant_conversation")
+  @@index([utilisateur_id], map: "idx_participant_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model photo_annonce {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cle          String  @db.VarChar(500)
+  nom_original String  @db.VarChar(255)
+  type_mime    String  @db.VarChar(100)
+  taille       Int
+  ordre        Int
+  annonce_id   String  @db.Uuid
+  annonce      annonce @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_photo_annonce")
+
+  @@index([annonce_id], map: "idx_photo_annonce")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model proposition {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prix_propose    Decimal?           @db.Decimal(12, 2)
+  lieu_remise     String?            @db.VarChar(255)
+  heure_remise    DateTime?          @db.Timestamptz(6)
+  statut          statut_proposition @default(EN_ATTENTE)
+  date_creation   DateTime           @default(now()) @db.Timestamptz(6)
+  annonce_id      String             @db.Uuid
+  conversation_id String             @db.Uuid
+  commande_id     String?            @unique @db.Uuid
+  annonce         annonce            @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_proposition_annonce")
+  commande        commande?          @relation(fields: [commande_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_proposition_commande")
+  conversation    conversation       @relation(fields: [conversation_id], references: [id], onUpdate: NoAction, map: "fk_proposition_conversation")
+
+  @@index([annonce_id], map: "idx_proposition_annonce")
+  @@index([conversation_id], map: "idx_proposition_conversation")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model remboursement {
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  montant           Decimal              @db.Decimal(12, 2)
+  motif             String
+  statut            statut_remboursement @default(REQUESTED)
+  date_demande      DateTime             @default(now()) @db.Timestamptz(6)
+  date_decision     DateTime?            @db.Timestamptz(6)
+  commande_id       String               @db.Uuid
+  paiement_id       String?              @unique @db.Uuid
+  versement_id      String?              @unique @db.Uuid
+  administrateur_id String?              @db.Uuid
+  ecriture_journal  ecriture_journal[]
+  administrateur    administrateur?      @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_remboursement_administrateur")
+  commande          commande             @relation(fields: [commande_id], references: [id], onUpdate: NoAction, map: "fk_remboursement_commande")
+  paiement          paiement?            @relation(fields: [paiement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_remboursement_paiement")
+  versement         versement?           @relation(fields: [versement_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_remboursement_versement")
+
+  @@index([administrateur_id], map: "idx_remboursement_administrateur")
+  @@index([commande_id], map: "idx_remboursement_commande")
+  @@index([statut], map: "idx_remboursement_statut")
+}
+
+model signalement {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cible_type        type_cible
+  cible_id          String             @db.Uuid
+  motif             String             @db.VarChar(255)
+  description       String?
+  statut            statut_signalement @default(OUVERT)
+  date_creation     DateTime           @default(now()) @db.Timestamptz(6)
+  utilisateur_id    String             @db.Uuid
+  administrateur_id String?            @db.Uuid
+  administrateur    administrateur?    @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction)
+  utilisateur       utilisateur        @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction)
+
+  @@index([administrateur_id], map: "idx_signalement_administrateur")
+  @@index([statut], map: "idx_signalement_statut")
+  @@index([utilisateur_id], map: "idx_signalement_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ticket_support {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sujet          String        @db.VarChar(255)
+  description    String
+  statut         statut_ticket @default(OUVERT)
+  date_creation  DateTime      @default(now()) @db.Timestamptz(6)
+  utilisateur_id String        @db.Uuid
+  commande_id    String?       @db.Uuid
+  troc_id        String?       @db.Uuid
+  commande       commande?     @relation(fields: [commande_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ticket_support_commande")
+  troc           troc?         @relation(fields: [troc_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_ticket_support_troc")
+  utilisateur    utilisateur   @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction)
+
+  @@index([commande_id], map: "idx_ticket_support_commande")
+  @@index([statut], map: "idx_ticket_support_statut")
+  @@index([troc_id], map: "idx_ticket_support_troc")
+  @@index([utilisateur_id], map: "idx_ticket_support_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model troc {
+  id                                        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  soulte                                    Decimal          @default(0) @db.Decimal(12, 2)
+  payeur_soulte                             sens_soulte      @default(AUCUNE)
+  statut                                    statut_troc      @default(PROPOSE)
+  lieu_echange                              String?          @db.VarChar(255)
+  date_echange                              DateTime?        @db.Timestamptz(6)
+  date_confirmation_a                       DateTime?        @db.Timestamptz(6)
+  date_confirmation_b                       DateTime?        @db.Timestamptz(6)
+  annonce_a_id                              String           @db.Uuid
+  annonce_b_id                              String           @db.Uuid
+  partie_a_id                               String           @db.Uuid
+  partie_b_id                               String           @db.Uuid
+  commande_id                               String?          @unique @db.Uuid
+  litige                                    litige[]
+  ticket_support                            ticket_support[]
+  annonce_troc_annonce_a_idToannonce        annonce          @relation("troc_annonce_a_idToannonce", fields: [annonce_a_id], references: [id], onUpdate: NoAction, map: "fk_troc_annonce_a")
+  annonce_troc_annonce_b_idToannonce        annonce          @relation("troc_annonce_b_idToannonce", fields: [annonce_b_id], references: [id], onUpdate: NoAction, map: "fk_troc_annonce_b")
+  commande                                  commande?        @relation(fields: [commande_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_troc_commande")
+  utilisateur_troc_partie_a_idToutilisateur utilisateur      @relation("troc_partie_a_idToutilisateur", fields: [partie_a_id], references: [id], onUpdate: NoAction, map: "fk_troc_partie_a")
+  utilisateur_troc_partie_b_idToutilisateur utilisateur      @relation("troc_partie_b_idToutilisateur", fields: [partie_b_id], references: [id], onUpdate: NoAction, map: "fk_troc_partie_b")
+
+  @@index([annonce_a_id], map: "idx_troc_annonce_a")
+  @@index([annonce_b_id], map: "idx_troc_annonce_b")
+  @@index([partie_a_id], map: "idx_troc_partie_a")
+  @@index([partie_b_id], map: "idx_troc_partie_b")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model utilisateur {
+  id                                         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prenom                                     String                     @db.VarChar(100)
+  nom                                        String                     @db.VarChar(100)
+  telephone                                  String?                    @unique(map: "uq_utilisateur_telephone", where: raw("(telephone IS NOT NULL)")) @db.VarChar(30)
+  email                                      String?                    @db.VarChar(255)
+  date_naissance                             DateTime?                  @db.Date
+  quartier                                   String?                    @db.VarChar(150)
+  statut                                     statut_compte              @default(ACTIF)
+  date_creation                              DateTime                   @default(now()) @db.Timestamptz(6)
+  administrateur                             administrateur?
+  annonce                                    annonce[]
+  commande_commande_acheteur_idToutilisateur commande[]                 @relation("commande_acheteur_idToutilisateur")
+  commande_commande_vendeur_idToutilisateur  commande[]                 @relation("commande_vendeur_idToutilisateur")
+  favori                                     favori[]
+  identite_externe                           identite_externe[]
+  lien_affiliation                           lien_affiliation[]
+  litige                                     litige[]
+  message                                    message[]
+  notification                               notification[]
+  participant_conversation                   participant_conversation[]
+  signalement                                signalement[]
+  ticket_support                             ticket_support[]
+  troc_troc_partie_a_idToutilisateur         troc[]                     @relation("troc_partie_a_idToutilisateur")
+  troc_troc_partie_b_idToutilisateur         troc[]                     @relation("troc_partie_b_idToutilisateur")
+  verification_identite                      verification_identite[]
+  versement                                  versement[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model verification_identite {
+  id                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  piece_recto_cle          String
+  piece_recto_nom_original String
+  piece_recto_type_mime    String              @db.VarChar(100)
+  piece_recto_taille       BigInt
+  piece_verso_cle          String
+  piece_verso_nom_original String
+  piece_verso_type_mime    String              @db.VarChar(100)
+  piece_verso_taille       BigInt
+  selfie_cle               String
+  selfie_nom_original      String
+  selfie_type_mime         String              @db.VarChar(100)
+  selfie_taille            BigInt
+  statut                   statut_verification @default(EN_ATTENTE)
+  motif_refus              String?
+  date_demande             DateTime            @default(now()) @db.Timestamptz(6)
+  date_decision            DateTime?           @db.Timestamptz(6)
+  utilisateur_id           String              @db.Uuid
+  administrateur_id        String?             @db.Uuid
+  administrateur           administrateur?     @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction)
+  utilisateur              utilisateur         @relation(fields: [utilisateur_id], references: [id], onUpdate: NoAction)
+
+  @@index([administrateur_id], map: "idx_verification_identite_administrateur")
+  @@index([statut], map: "idx_verification_identite_statut")
+  @@index([utilisateur_id], map: "idx_verification_identite_utilisateur")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model versement {
+  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                    type_versement
+  montant                 Decimal                  @db.Decimal(12, 2)
+  frais_transfert         Decimal                  @db.Decimal(12, 2)
+  operateur               operateur
+  numero_beneficiaire     String                   @db.VarChar(30)
+  nom_titulaire           String                   @db.VarChar(150)
+  statut                  statut_versement         @default(NOT_READY)
+  reference_transfert     String?                  @db.VarChar(255)
+  date_decision           DateTime?                @db.Timestamptz(6)
+  date_transfert          DateTime?                @db.Timestamptz(6)
+  commande_id             String                   @db.Uuid
+  beneficiaire_id         String                   @db.Uuid
+  administrateur_id       String?                  @db.Uuid
+  attribution_affiliation attribution_affiliation?
+  ecriture_journal        ecriture_journal[]
+  remboursement           remboursement?
+  administrateur          administrateur?          @relation(fields: [administrateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_versement_administrateur")
+  utilisateur             utilisateur              @relation(fields: [beneficiaire_id], references: [id], onUpdate: NoAction, map: "fk_versement_beneficiaire")
+  commande                commande                 @relation(fields: [commande_id], references: [id], onUpdate: NoAction, map: "fk_versement_commande")
+
+  @@index([administrateur_id], map: "idx_versement_administrateur")
+  @@index([beneficiaire_id], map: "idx_versement_beneficiaire")
+  @@index([commande_id], map: "idx_versement_commande")
+  @@index([statut], map: "idx_versement_statut")
+}
+
+enum disponibilite {
+  DISPONIBLE
+  INDISPONIBLE
+  EPUISEE
+}
+
+enum etat_article {
+  NEUF
+  OCCASION
+}
+
+enum fournisseur_auth {
+  FIREBASE
+}
+
+enum operateur {
+  MTN_MOMO
+  ORANGE_MONEY
+}
+
+enum role_admin {
+  SUPER_ADMIN
+  MODERATEUR
+  FINANCIER
+}
+
+enum sens_ecriture {
+  DEBIT
+  CREDIT
+}
+
+enum sens_soulte {
+  PARTIE_A_PAIE
+  PARTIE_B_PAIE
+  AUCUNE
+}
+
+enum statut_code {
+  ACTIF
+  UTILISE
+  BLOQUE
+}
+
+enum statut_commande {
+  CREEE
+  EN_ATTENTE_PAIEMENT
+  PAYEE
+  CODE_VALIDE
+  TERMINEE
+  ANNULEE
+  REMBOURSEE
+  EN_LITIGE
+}
+
+enum statut_compte {
+  ACTIF
+  SUSPENDU
+}
+
+enum statut_conversation {
+  ACTIVE
+  ARCHIVEE
+}
+
+enum statut_demande {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  ANNULEE
+}
+
+enum statut_evenement {
+  EN_ATTENTE
+  PUBLIE
+  ECHEC
+}
+
+enum statut_litige {
+  OUVERT
+  EN_EXAMEN
+  TRANCHE
+  CLOS
+}
+
+enum statut_paiement {
+  INITIATED
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  UNKNOWN
+}
+
+enum statut_proposition {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  ANNULEE
+}
+
+enum statut_remboursement {
+  REQUESTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXECUTED
+}
+
+enum statut_remuneration {
+  EN_ATTENTE
+  ACQUISE
+  ANNULEE
+  VERSEE
+}
+
+enum statut_signalement {
+  OUVERT
+  EN_COURS
+  TRAITE
+  REJETE
+}
+
+enum statut_ticket {
+  OUVERT
+  EN_COURS
+  RESOLU
+  FERME
+}
+
+enum statut_troc {
+  PROPOSE
+  ACCEPTE
+  SOULTE_EN_ATTENTE
+  EN_COURS
+  CONFIRME
+  EN_LITIGE
+  ANNULE
+}
+
+enum statut_verification {
+  EN_ATTENTE
+  VERIFIEE
+  REFUSEE
+}
+
+enum statut_versement {
+  NOT_READY
+  AWAITING_ADMIN_DECISION
+  APPROVED
+  SUBMITTED
+  SUCCEEDED
+  FAILED
+  UNKNOWN
+}
+
+enum type_cible {
+  ANNONCE
+  UTILISATEUR
+  MESSAGE
+  CONVERSATION
+}
+
+enum type_commande {
+  ACHAT
+  TROC_SOULTE
+}
+
+enum type_ecriture {
+  PAIEMENT_RECU
+  VERSEMENT_EMIS
+  REMBOURSEMENT_EMIS
+  FRAIS_TRANSFERT
+  REMUNERATION_AFFILIE
+  CORRECTION
+}
+
+enum type_notification {
+  MESSAGE_RECU
+  PROPOSITION_RECUE
+  COMMANDE_CREEE
+  PAIEMENT_CONFIRME
+  CODE_DISPONIBLE
+  VERSEMENT_EFFECTUE
+  REMBOURSEMENT_DECIDE
+  LITIGE_MIS_A_JOUR
+  VERIFICATION_DECIDEE
+  PAIEMENT_SIGNALE
+  PAIEMENT_ECHOUE
+  PROPOSITION_TROC_RECUE
+}
+
+enum type_versement {
+  VENDEUR
+  AFFILIE
+  REMBOURSEMENT
+}
+
+enum visibilite {
+  PUBLIEE
+  MASQUEE
+  SUSPENDUE
+}
