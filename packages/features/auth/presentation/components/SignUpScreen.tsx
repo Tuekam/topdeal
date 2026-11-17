@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { BeginAuthRegistrationInput } from "../../domain/use-cases/BeginAuthRegistrationUseCase";
-import type { AuthRegistrationResult } from "../../domain/use-cases/AuthRegistrationResult";
-import type { SendEmailVerificationResult } from "../../domain/use-cases/SendEmailVerificationUseCase";
+import type {
+  AuthRegistrationResult,
+  BeginAuthRegistrationInput,
+  SendEmailVerificationResult,
+} from "../../core";
 import { SetRegistrationPasswordScreen } from "./SetRegistrationPasswordScreen";
 import { EmailVerificationScreen } from "./EmailVerificationScreen";
 import { ProfileCompletionScreen } from "./ProfileCompletionScreen";

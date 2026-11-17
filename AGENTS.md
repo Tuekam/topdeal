@@ -1,352 +1,566 @@
-
 # AGENTS.md — Instructions globales du projet TopDeal
 
 Ce fichier définit les règles communes que tout agent de développement doit respecter lorsqu'il intervient sur TopDeal.
 
-Il complète les skills spécialisés du projet. En cas de besoin, l'agent doit consulter le skill concerné avant de prendre une décision ou de modifier le code.
+Il constitue la **source de vérité principale** pour les conventions du projet. Les skills spécialisés complètent ces règles, mais ne doivent jamais les contredire.
 
 ---
 
-## 1. Mission de l'agent
+# 1. Mission de l'agent
 
-Tu interviens comme un ingénieur logiciel expérimenté chargé de faire évoluer TopDeal avec une architecture claire, maintenable et fortement évolutive.
+Tu interviens comme un ingénieur logiciel chargé de faire évoluer TopDeal avec une architecture claire, cohérente, maintenable et évolutive.
 
-Tes priorités, dans cet ordre, sont :
+Tes priorités sont, dans cet ordre :
 
 1. Respecter le besoin fonctionnel réellement exprimé.
 2. Préserver les règles métier et les décisions déjà validées.
-3. Limiter le couplage entre le métier et les technologies.
+3. Respecter les responsabilités et les frontières de l'architecture.
 4. Produire une solution simple, lisible, testable et maintenable.
-5. Garantir de bonnes performances et une récupération rapide des données.
-6. Protéger les données et les opérations sensibles.
-7. Éviter les abstractions, dépendances et fonctionnalités non nécessaires.
+5. Limiter le couplage avec les technologies.
+6. Garantir la sécurité et la cohérence des données.
+7. Prendre en compte les performances sans complexifier inutilement le code.
+8. Éviter les abstractions, dépendances et fonctionnalités non nécessaires.
+
+**L'objectif n'est pas de construire l'architecture la plus complexe possible, mais la plus simple qui respecte correctement les besoins du projet.**
 
 Ne considère jamais une proposition, un exemple ou une hypothèse comme une décision validée sans confirmation explicite.
 
-## 2. Skills du projet
-les skills sont situes dans .agent/skill
+# 2. Sources de vérité et skills
 
-Des skills spécialisés complètent ce fichier. Consulte-les dès qu'ils sont pertinents pour la tâche.
+Les sources de vérité sont, par ordre de priorité :
 
-| Skill | À consulter pour |
+1. Les décisions explicites et récentes du propriétaire du projet.
+2. Ce fichier `AGENTS.md`.
+3. Les spécifications fonctionnelles validées.
+4. Les skills spécialisés du projet.
+5. Le code existant, lorsqu'il ne contredit aucune décision validée.
+
+Les skills sont situés dans `.agent/skills/`.
+
+| Skill | Responsabilité |
 |---|---|
-| `architecture` | Structure du monorepo, responsabilités des couches, dépendances, flux entre les couches et règles d'architecture |
-| `design-system` | Interfaces, composants visuels, styles, responsive, états d'interface et cohérence graphique |
-| `nomenclature` | Noms des fichiers, dossiers, classes, interfaces, fonctions, hooks et autres éléments |
-| `evolutivite` | Découplage technologique, ports/adapters, remplaçabilité des infrastructures, choix d'abstractions et revues de code |
-| `securite` | Authentification, autorisations, validation, protection des données, API, fichiers, opérations sensibles et intégrations externes |
-| `performance` | Temps de réponse, accès aux données, pagination, recherche, requêtes, indexation, chargement frontend et mesure des performances |
-| `transactions-evolutives` | Paiements, versements, remboursements, traitement manuel actuel et futures intégrations avec des agrégateurs ou API d'opérateurs |
+| `architecture` | Organisation des modules, couches, contrats et dépendances |
+| `nomenclature` | Nommage des fichiers, dossiers, classes et interfaces |
+| `evolutivite` | Découplage technique, ports, adaptateurs et évolutivité |
+| `design-system` | Composants visuels, styles et expérience utilisateur |
+| `securite` | Authentification, autorisations, données sensibles et validation |
+| `performance` | Requêtes, pagination, chargements et performances |
+| `transactions-evolutives` | Paiements, versements, remboursements et intégrations financières |
 
-Si les skills ne sont pas directement disponibles dans l'environnement, demande leur emplacement ou leur contenu au lieu d'inventer leurs règles.
+Pour toute modification de code, consulte au minimum les skills `architecture`, `nomenclature` et `evolutivite`.
 
-Pour toute création ou modification de code, consulte au minimum les skills `architecture`, `nomenclature` et `evolutivite`.
+Consulte les autres skills lorsque le périmètre les concerne.
 
-Consulte également :
+En cas de contradiction, ne choisis pas arbitrairement une règle. Identifie le conflit et demande une clarification lorsque les décisions existantes ne permettent pas de le résoudre.
 
-- `design-system` dès que la tâche touche à l'interface.
-- `securite` dès que la tâche touche à l'authentification, aux autorisations, aux données sensibles, aux API, aux fichiers ou à une opération sensible.
-- `performance` dès que la tâche touche aux requêtes, à la recherche, à la pagination, au chargement ou à la récupération des données.
-- `transactions-evolutives` dès que la tâche touche aux paiements, transactions, versements, remboursements, confirmations ou fournisseurs de paiement.
+# 3. Contexte technique du projet
 
-En cas de contradiction apparente, ne choisis pas arbitrairement : identifie la règle concernée et demande une clarification si la décision ne peut pas être déduite des choix déjà validés.
+TopDeal est une marketplace destinée au contexte de Bafoussam, au Cameroun.
 
-## 3. Contexte et objectif de TopDeal
+Le projet utilise un monorepo organisé autour de pnpm workspaces.
 
-TopDeal est une plateforme de marketplace destinée au contexte de Bafoussam, au Cameroun.
-
-Le projet doit pouvoir évoluer sans rendre coûteux le remplacement d'une technologie. Par exemple, le choix actuel d'une base relationnelle ne doit pas rendre impossible une migration future vers une base NoSQL ; le choix de Prisma ne doit pas rendre l'ensemble du métier dépendant de Prisma.
-
-L'évolutivité est une exigence d'architecture, pas une raison pour multiplier les couches ou anticiper tous les scénarios imaginables.
-
-Ne crée pas de règles métier, de parcours utilisateur, de garanties commerciales ou de fonctionnalités qui n'ont pas été validés.
-
-## 4. Décisions techniques et structurelles validées
-
-Les éléments ci-dessous représentent les décisions actuellement retenues. Ils pourront changer si le propriétaire du projet le demande.
-
-### 4.1 Organisation générale
-
-- Le projet utilise un monorepo géré avec pnpm workspaces.
-- Aucun dossier `src` ne doit être créé, ni à la racine des applications, ni dans les packages.
-- L'organisation est orientée fonctionnalités (*feature-first*).
-- Les fonctionnalités possèdent leurs propres responsabilités `domain`, `data` et `presentation`.
-- `packages/core` contient uniquement les éléments réellement transversaux.
-- L'application Web est dans `apps/web`.
-- Le projet doit éviter les dossiers globaux fourre-tout tels que `repositories/`, `use-cases/` ou `services/` à la racine pour y centraliser le code de toutes les fonctionnalités.
-
-### 4.2 Technologies retenues actuellement
-
-| Domaine | Choix actuel |
+| Domaine | Technologie actuelle |
 |---|---|
 | Monorepo | pnpm workspaces |
-| Application Web | Next.js App Router, React, TypeScript |
-| Styles | Tailwind CSS, en respectant le Design System |
+| Application Web | Next.js App Router |
+| Interface | React et TypeScript |
+| Styles | Tailwind CSS |
 | Injection de dépendances | Awilix |
-| Base de données actuelle | PostgreSQL |
-| Accès aux données actuel | Prisma |
-| Authentification actuelle | Firebase Auth, derrière une abstraction |
-| Stockage de fichiers actuel | MinIO, compatible avec l'API S3 |
-| Contrat d'API à prévoir | OpenAPI |
+| Base de données | PostgreSQL |
+| Accès aux données | Prisma |
+| Authentification | Firebase Auth |
+| Stockage de fichiers | MinIO, compatible S3 |
 | Client mobile envisagé | Kotlin Multiplatform |
 
-Ces choix ne doivent pas devenir des dépendances directes du domaine métier. Une technologie envisagée pour plus tard ne doit pas être implémentée prématurément.
+Ces technologies représentent les choix actuels. Elles ne doivent pas devenir des dépendances directes des règles métier.
 
-### 4.3 Packages et fonctionnalités
+Une technologie envisagée pour plus tard ne doit pas être implémentée prématurément.
 
-- Les packages partagés sont regroupés sous `packages/`.
-- Le namespace de packages est `@topdeal`, par exemple `@topdeal/ui` et `@topdeal/feature-annonce`.
-- Chaque fonctionnalité est isolée dans son package, par exemple `packages/features/annonce`.
-- Une fonctionnalité peut contenir :
-  - `domain/` : règles métier, modèles métier, cas d'utilisation et contrats nécessaires ;
-  - `data/` : implémentations d'accès aux données, adaptateurs et transformations ;
-  - `presentation/` : éléments de présentation propres à la fonctionnalité.
-- Ne crée que les sous-dossiers et fichiers utiles. Une structure théorique ne justifie pas la création de dossiers vides.
+**Règles structurelles :**
 
-Fonctionnalités identifiées à ce stade :
+- Aucun dossier `src` ne doit être créé.
+- Les packages internes utilisent le namespace `@topdeal`.
+- Les fonctionnalités sont organisées dans `packages/features/`.
+- `packages/core` contient uniquement les éléments réellement partagés.
+- `packages/ui` contient les composants visuels génériques.
+- `apps/web` contient l'application Next.js et son assemblage technique.
+- Ne crée pas de dossiers vides pour compléter artificiellement une architecture.
 
-`auth`, `annonce`, `commande`, `paiement`, `conversation`, `favoris`, `proposition`, `versement`, `remboursement`, `troc`, `affiliation`, `verification-identite`, `notification`, `litige`, `support`, `administration`.
+# 4. Architecture générale
 
-N'ajoute pas automatiquement toutes ces fonctionnalités au code si elles ne sont pas encore nécessaires au périmètre en cours.
+L'architecture est organisée par fonctionnalité (*feature-first*).
 
-### 4.4 Responsabilités des couches
+Chaque fonctionnalité possède ses propres responsabilités.
 
-**Domain**
-- Contient les règles métier et les cas d'utilisation.
-- Ne dépend pas de Prisma, Firebase, Next.js, React, Awilix ou d'une implémentation concrète de la couche Data.
-- Définit les contrats dont le métier a besoin lorsque cela est justifié.
-- Ne contient pas de types propres à un ORM ou à un fournisseur externe.
+Structure de référence :
 
-**Data**
-- Implémente les contrats utilisés par le domaine.
-- Contient les accès à Prisma et les intégrations avec les fournisseurs externes.
-- Convertit les données techniques en modèles attendus par le domaine.
-- Ne doit pas faire remonter les objets Prisma ou SDK externes dans le domaine.
+```text
+packages/
+├── core/
+│   ├── models/
+│   ├── usecases/
+│   └── repositories/
+│
+├── features/
+│   └── auth/
+│       ├── core/
+│       │   ├── models/
+│       │   ├── usecases/
+│       │   └── repositories/
+│       │
+│       ├── domain/
+│       │   └── usecases/
+│       │
+│       ├── data/
+│       │   ├── repositories/
+│       │   └── services/
+│       │
+│       └── presentation/
+│           ├── screens/
+│           ├── components/
+│           ├── hooks/
+│           ├── styles/
+│           └── types/
+│
+└── ui/
+```
 
-**Presentation**
-- Contient les composants, hooks et états de présentation de la fonctionnalité.
-- Ne doit pas contenir les règles métier complexes ni accéder directement à Prisma.
-- Utilise les mécanismes d'accès aux cas d'utilisation prévus par l'architecture.
+Cette structure est une référence, pas une obligation de créer tous les dossiers dans chaque fonctionnalité.
 
-**apps/web**
-- Contient les routes Next.js, les points d'entrée HTTP, les providers, la configuration et le démarrage de l'application.
-- Contient le conteneur DI et le Composition Root.
-- Les Route Handlers valident la requête, appliquent les contrôles liés au protocole et à l'accès, puis appellent les cas d'utilisation via le mécanisme prévu.
-- Un Route Handler ne doit pas appeler Prisma ou un repository concret directement.
+**Ne crée un dossier que lorsqu'un élément réel doit y être placé.**
 
-**packages/core**
-- Contient uniquement les modèles, interfaces, enums, erreurs et utilitaires purs réellement partagés par plusieurs fonctionnalités.
-- Ne devient pas un emplacement par défaut pour du code qui ne trouve pas sa place ailleurs.
-- Un élément utilisé par une seule fonctionnalité reste dans cette fonctionnalité.
+# 5. Responsabilités des couches
 
-**packages/ui**
-- Contient les composants visuels réutilisables.
-- Ne contient pas de règles métier propres à une fonctionnalité.
+## 5.1. Core
 
-## 5. Règles d'évolutivité et de découplage
+Core contient les contrats et modèles nécessaires à l'organisation du métier.
 
-L'agent doit concevoir le code pour que les technologies d'infrastructure puissent être remplacées avec un impact limité sur le métier.
+Il existe deux niveaux :
 
-- Le domaine ne doit pas importer les bibliothèques d'infrastructure.
-- Les dépendances doivent être orientées vers les contrats métier, pas vers les implémentations techniques.
-- Les implémentations concrètes sont assemblées au niveau du Composition Root.
-- Les modèles métier doivent être séparés des DTO HTTP, des modèles Prisma et des types de SDK.
-- Une dépendance externe doit être isolée derrière un contrat lorsque son remplacement ou son indépendance est un besoin réel.
-- Ne crée pas systématiquement une interface pour chaque classe ou fonction.
-- Ne crée pas de repository générique universel sans besoin concret.
-- Ne multiplie pas les couches de mapping si elles n'apportent aucune séparation utile.
-- N'introduis pas un design pattern uniquement pour appliquer un principe de manière théorique.
+**Core global : `packages/core/`**
 
-Exemples d'objectifs :
-- Remplacer Prisma sans réécrire les cas d'utilisation.
-- Remplacer PostgreSQL par une autre technologie de persistance en réévaluant explicitement les différences de comportement.
-- Remplacer Firebase Auth ou MinIO sans propager leurs types dans le domaine.
+Contient uniquement les éléments véritablement partagés entre plusieurs fonctionnalités :
 
-Une migration technologique n'est jamais automatiquement sans coût : l'agent doit signaler les différences de transactions, cohérence, contraintes, requêtes, recherche, pagination, unicité ou performances qui peuvent affecter le métier.
+- `models/` : modèles communs ;
+- `usecases/` : contrats de Use Cases communs ;
+- `repositories/` : contrats de repositories communs.
 
-## 6. Injection de dépendances
+**Core d'une fonctionnalité : `packages/features/<feature>/core/`**
 
-- Awilix est utilisé pour l'injection de dépendances dans l'application Web.
-- Le conteneur et l'assemblage des implémentations techniques appartiennent à `apps/web`.
-- Les fonctionnalités ne doivent pas importer le conteneur global.
-- Le domaine ne doit pas connaître Awilix.
-- Évite le Service Locator : une classe ou un cas d'utilisation doit recevoir explicitement ses dépendances.
-- N'ajoute pas de résolution dynamique ou de dépendance globale cachée.
+Contient les contrats et modèles propres à cette fonctionnalité :
 
-## 7. Interface utilisateur et Design System
+- `models/` ;
+- `usecases/` ;
+- `repositories/`.
 
-Pour toute tâche d'interface, le skill `design-system` fait autorité pour les détails visuels.
+Une interface utilisée uniquement par Auth reste dans le Core d'Auth.
 
-Rappels importants :
-- Utiliser React, TypeScript et Tailwind CSS selon les conventions du projet.
-- Réutiliser les composants partagés plutôt que recopier les mêmes styles.
-- Ne pas inventer une nouvelle palette, typographie, échelle d'espacement ou convention visuelle.
-- Respecter les versions responsive mobile, tablette et desktop.
-- Prévoir les états utiles : chargement, vide, erreur, succès et désactivation lorsque pertinents.
-- Les tableaux doivent avoir une présentation adaptée aux petits écrans.
-- Ne pas ajouter d'ombres, de couleurs ou d'effets décoratifs qui contredisent le Design System.
-- Ne pas inventer de promesses produit telles que « annonces vérifiées », « remboursement automatique » ou « 100 % sécurisé ».
+Ne déplace pas un élément dans le Core global simplement pour le rendre accessible à plusieurs dossiers.
 
-Les règles métier validées priment sur les éléments purement illustratifs d'une maquette. En particulier :
-- Ne pas créer de portefeuille utilisateur.
-- Ne pas ajouter de solde disponible ou de retrait de portefeuille.
-- Pour les vues de suivi concernées, utiliser l'historique des versements lorsque cela correspond au besoin validé.
+## 5.2. Domain
 
-## 8. Qualité du code et principes de conception
+Domain contient les implémentations des Use Cases et les règles métier correspondantes.
 
-Applique les principes de conception avec discernement :
+Il contient uniquement le dossier :
 
-- **SOLID** : lorsque cela améliore réellement la séparation des responsabilités et la capacité d'évolution.
-- **DRY** : factoriser les duplications significatives, sans créer une abstraction plus complexe que le code répété.
-- **KISS** : préférer la solution la plus simple qui répond correctement au besoin.
-- **YAGNI** : ne pas développer une fonctionnalité ou une abstraction hypothétique.
-- **Modularité** : maintenir des frontières claires et des dépendances maîtrisées.
-- **Performance** : mesurer ou identifier un problème réel avant d'ajouter une optimisation complexe.
-- **Sécurité** : valider les entrées, contrôler les autorisations côté serveur et ne jamais exposer de secrets.
+```text
+domain/
+└── usecases/
+```
 
-Exemple : si une règle de calcul est unique et stable, une méthode simple peut suffire. N'introduis pas un Strategy Pattern tant qu'il n'existe pas plusieurs stratégies réelles à sélectionner.
+Chaque Use Case représente une opération métier clairement identifiée.
 
-Ne cherche pas à appliquer tous les design patterns. Explique le problème concret qu'un pattern résout avant de l'introduire.
+Exemples :
 
-## 9. Sécurité et données
+- `CreateTaskUseCaseImpl`
+- `UpdateTaskUseCaseImpl`
+- `DeleteTaskUseCaseImpl`
 
-- Ne place jamais de secret, clé privée, mot de passe ou jeton sensible dans le code versionné.
-- Utilise les variables d'environnement et ne publie pas leur valeur.
-- Valide les données reçues aux frontières du système.
-- Vérifie les autorisations côté serveur ; masquer un bouton dans l'interface ne constitue pas un contrôle d'accès.
-- Ne fais pas confiance aux identifiants, prix, statuts ou rôles transmis par le client sans validation serveur.
-- Évite de journaliser des données personnelles, des secrets ou des informations sensibles.
-- N'ajoute pas de collecte de données personnelles sans nécessité fonctionnelle.
-- Les opérations sensibles doivent respecter les règles métier et les contrôles d'accès définis.
-- Pour les tâches de sécurité, consulte obligatoirement le skill `securite`.
+Chaque implémentation respecte le contrat correspondant défini dans Core.
 
-## 9.1. Exigences de performance
+Exemple :
 
-La rapidité de l'application est une exigence transversale. L'agent doit privilégier des solutions simples qui évitent les chargements inutiles et les traitements coûteux.
+```ts
+export class TaskUseCaseImpl implements TaskUseCase {
+  // Implémentation de l'opération métier
+}
+```
 
-- Toute liste ou recherche susceptible de contenir beaucoup de résultats doit utiliser une pagination côté serveur.
-- Ne récupère pas tous les enregistrements pour les filtrer ou les paginer ensuite dans le frontend.
-- Applique les filtres, tris et limites au niveau de la base de données lorsque cela est pertinent.
-- Ne récupère que les champs nécessaires à l'écran ou au cas d'utilisation.
-- Évite les requêtes répétitives, les problèmes N+1 et les appels réseau inutiles.
-- Évite les chargements successifs inutiles lorsque les données peuvent être récupérées efficacement.
-- N'ajoute pas de cache sans besoin identifié, stratégie d'invalidation et cohérence maîtrisée.
-- Mesure ou diagnostique les lenteurs avant d'introduire une optimisation complexe.
-- Ne sacrifie pas la cohérence des données pour obtenir artificiellement de meilleures performances.
-- Consulte le skill `performance` pour toute tâche touchant aux données, recherches, listes, pagination ou temps de réponse.
+Le Domain :
 
-Le but est une application rapide et prévisible, sans sacrifier la simplicité, la cohérence des données ou la maintenabilité.
+- ne dépend pas de Prisma ;
+- ne dépend pas de Firebase SDK ;
+- ne dépend pas de Next.js ;
+- ne dépend pas de React ;
+- ne dépend pas d'Awilix ;
+- ne dépend pas des implémentations concrètes de Data.
 
-## 10. Transactions et évolutivité des paiements
+Ne place pas les implémentations de repositories dans Domain.
 
-Le traitement des transactions est actuellement manuel. Cela décrit le fonctionnement opérationnel actuel, pas une contrainte d'architecture permanente.
+## 5.3. Data
 
-Le code doit préserver le parcours manuel tout en permettant l'ajout futur d'agrégateurs de paiement ou d'API d'opérateurs sans réécrire les règles métier.
+Data contient les implémentations techniques nécessaires aux contrats définis dans Core.
 
-Règles fondamentales :
+Il contient uniquement :
 
-- Les règles métier des transactions doivent rester indépendantes du fournisseur et du mode de traitement.
-- Les intégrations concrètes doivent être isolées derrière des ports et des adaptateurs.
-- Les Use Cases ne doivent jamais dépendre directement d'un SDK d'agrégateur ou d'un opérateur.
-- Le domaine ne doit pas contenir de statuts ou de propriétés spécifiques à un fournisseur.
-- Le traitement manuel doit rester fonctionnel tant qu'il est utilisé.
-- Ne suppose pas qu'une automatisation existe déjà, mais ne construis pas non plus le domaine comme si le traitement devait rester manuel pour toujours.
-- Ne crée pas un système multi-fournisseurs complexe avant qu'un besoin réel le justifie.
-- L'ajout d'un fournisseur doit principalement nécessiter un nouvel adaptateur, sa configuration et son enregistrement dans la DI.
+```text
+data/
+├── repositories/
+└── services/
+```
 
-Fiabilité et confirmation :
+**`repositories/`**
 
-- Une transaction ne doit jamais être considérée comme réussie uniquement parce qu'une requête a été envoyée ou qu'un écran affiche un succès.
-- La confirmation doit provenir d'une source serveur fiable : confirmation fournisseur vérifiée ou validation manuelle autorisée.
-- Prévoir les délais, erreurs réseau, réponses tardives et notifications répétées.
-- Éviter les doubles traitements avec une stratégie d'idempotence adaptée.
-- Ne pas relancer aveuglément une opération financière après un timeout.
-- Conserver les références internes et externes nécessaires au suivi et au rapprochement.
-- Ne jamais faire confiance au montant ou au statut transmis par le frontend.
+Contient les implémentations concrètes des contrats de repositories.
 
-Les règles métier, frais, commissions, délais, remboursements, rôles de validation et fournisseurs ne doivent pas être inventés.
+Exemple :
 
-Pour toute évolution de paiement, versement, remboursement ou transaction, consulter obligatoirement le skill `transactions-evolutives` ainsi que le skill `securite`.
+```ts
+export class TaskCreateRepositoryImpl
+  implements CreateTaskRepository {
+  // Accès technique aux données
+}
+```
 
-## 11. Méthode de travail obligatoire
+**`services/`**
 
-Avant toute modification significative :
+Contient les intégrations techniques avec les fournisseurs externes ou les systèmes nécessaires.
 
-1. Examiner la structure existante et les fichiers réellement concernés.
-2. Lire les instructions et skills applicables.
-3. Identifier les règles métier et décisions déjà validées.
-4. Déterminer la couche et la fonctionnalité auxquelles appartient le changement.
-5. Identifier les dépendances techniques qui risquent de traverser une frontière.
-6. Choisir la solution la plus simple qui respecte les contraintes.
-7. Repérer les impacts sur les autres fonctionnalités, l'API, les données et l'interface.
-8. Vérifier les conséquences éventuelles sur la sécurité et les performances.
+Exemples possibles :
 
-Pendant le travail :
+- Firebase ;
+- stockage S3 ;
+- services externes ;
+- autres intégrations techniques.
 
-- Respecter les conventions existantes lorsqu'elles ne contredisent pas une décision validée.
-- Limiter les changements au périmètre demandé.
-- Ne pas renommer, déplacer ou reformater des éléments sans nécessité.
-- Ne pas ajouter de dépendance sans expliquer son utilité.
-- Ne pas modifier les règles métier de manière implicite.
-- Ne pas remplacer une technologie ou une bibliothèque sans demande ou justification validée.
-- Ne pas créer de fichiers, interfaces, classes, dossiers ou tests vides uniquement pour compléter une structure.
+Ne crée pas de dossier `adapters/`, `mappers/` ou `models/` par défaut.
 
-Après le travail :
+Si une transformation ou un traitement technique est nécessaire, place-le dans le fichier ou la responsabilité appropriée sans créer une couche supplémentaire automatiquement.
 
-1. Vérifier les imports et les frontières entre couches.
-2. Exécuter les vérifications pertinentes disponibles : lint, typecheck, tests et build selon le périmètre.
-3. Corriger les erreurs introduites par le changement.
-4. Signaler clairement les vérifications non exécutées et les raisons.
-5. Résumer les fichiers modifiés, les décisions prises et les éventuels points restant à valider.
+Data ne doit pas devenir propriétaire des règles métier.
 
-## 12. Gestion des incertitudes
+## 5.4. Presentation
 
-Quand une information manque :
+Chaque fonctionnalité possède sa propre présentation.
 
-- Ne devine pas une règle métier.
-- Ne transforme pas une idée en exigence.
-- Ne choisis pas silencieusement entre deux comportements qui ont des conséquences fonctionnelles.
-- Pose une question ciblée si la réponse change sensiblement la conception ou le résultat.
-- Si le détail est secondaire et réversible, propose une option simple en la présentant explicitement comme une proposition.
+Structure de référence :
 
-Quand une demande entre en conflit avec l'architecture :
+```text
+presentation/
+├── screens/
+├── components/
+├── hooks/
+├── styles/
+└── types/
+```
 
-1. Expliquer brièvement le conflit.
-2. Présenter l'impact de la demande.
-3. Proposer une solution qui respecte autant que possible le besoin.
-4. Demander confirmation si cela implique de modifier une décision structurante.
+Responsabilités :
 
-## 13. Format des réponses de l'agent
+- `screens/` : écrans complets de la fonctionnalité ;
+- `components/` : composants propres à la fonctionnalité ;
+- `hooks/` : hooks de présentation ;
+- `styles/` : styles séparés de la logique des composants ;
+- `types/` : types propres à la présentation.
 
-Pour une tâche de développement, la réponse finale doit être concise mais suffisamment précise. Elle doit indiquer :
+Un composant exclusivement utilisé par une fonctionnalité reste dans celle-ci.
+
+Un composant véritablement générique et réutilisable peut être placé dans `packages/ui`.
+
+Ne déplace pas un composant métier dans `packages/ui` uniquement parce qu'il est utilisé à plusieurs endroits d'une même fonctionnalité.
+
+# 6. Atomicité et organisation des fichiers
+
+L'atomicité est une règle importante de TopDeal.
+
+Elle signifie qu'un fichier doit avoir une responsabilité claire et identifiable.
+
+Applique les règles suivantes :
+
+1. Un Use Case représente une opération métier.
+2. Une implémentation de Use Case possède son propre fichier.
+3. Un contrat possède son propre fichier.
+4. Les types importants et réutilisables possèdent leurs propres fichiers.
+5. Une implémentation de repository possède son propre fichier.
+6. Un composant possède son propre fichier lorsque cela améliore réellement sa lisibilité et sa réutilisation.
+7. Les responsabilités distinctes ne doivent pas être regroupées artificiellement dans une seule classe.
+
+Cependant, **l'atomicité ne signifie pas qu'il faut créer un fichier pour chaque petite fonction ou chaque type temporaire.**
+
+Avant de créer un fichier, vérifie :
+
+- S'il possède une responsabilité réellement distincte.
+- S'il sera compréhensible et utile indépendamment.
+- S'il évite de mélanger plusieurs responsabilités.
+- Si sa création apporte une meilleure organisation réelle.
+
+Ne transforme pas l'atomicité en prolifération de fichiers.
+
+# 7. Contrats et implémentations
+
+Les contrats et leurs implémentations doivent être séparés.
+
+Exemple :
+
+```text
+core/
+├── repositories/
+│   └── CreateTaskRepository.ts
+└── usecases/
+    └── CreateTaskUseCase.ts
+
+domain/
+└── usecases/
+    └── CreateTaskUseCaseImpl.ts
+
+data/
+└── repositories/
+    └── TaskCreateRepositoryImpl.ts
+```
+
+Le contrat exprime ce dont le métier a besoin.
+
+L'implémentation réalise ce besoin.
+
+Ne crée pas automatiquement une interface pour chaque classe.
+
+Une interface est justifiée lorsqu'elle définit une frontière utile, un contrat nécessaire ou une implémentation qui doit pouvoir être remplacée.
+
+# 8. Gestion des erreurs
+
+TopDeal utilise un catalogue centralisé des erreurs.
+
+Les codes et messages destinés à être réutilisés doivent être déclarés dans un emplacement central adapté.
+
+Règles :
+
+- Ne répète pas les mêmes messages d'erreur dans plusieurs fichiers.
+- Utilise des codes d'erreur stables.
+- Préserve les informations utiles au diagnostic.
+- Ne révèle pas les détails techniques internes au client.
+- Distingue les erreurs métier des erreurs techniques.
+- Traduis les erreurs techniques au niveau approprié avant de les exposer.
+
+Ne crée pas plusieurs catalogues concurrents pour une même responsabilité.
+
+Une erreur spécifique à une fonctionnalité peut rester propre à cette fonctionnalité si elle ne doit pas être partagée.
+
+# 9. Dépendances et Composition Root
+
+Les dépendances doivent respecter les frontières des couches.
+
+- Core définit les contrats nécessaires.
+- Domain implémente les Use Cases.
+- Data implémente les contrats techniques.
+- Presentation déclenche les opérations métier.
+- `apps/web` assemble les implémentations concrètes.
+
+Awilix appartient au Composition Root de `apps/web`.
+
+Le conteneur ne doit pas être importé directement dans les Use Cases ou dans les fonctionnalités.
+
+Les dépendances doivent être injectées explicitement.
+
+Évite le Service Locator et les dépendances globales cachées.
+
+Ne crée pas de mécanisme d'injection supplémentaire si Awilix et l'organisation existante répondent déjà au besoin.
+
+# 10. Application Web et API
+
+`apps/web` contient notamment :
+
+- les routes Next.js ;
+- les Route Handlers ;
+- les composants propres à l'application ;
+- la configuration ;
+- le bootstrap ;
+- le Composition Root ;
+- le conteneur de dépendances.
+
+Un Route Handler doit :
+
+1. Recevoir la requête.
+2. Valider les données reçues.
+3. Vérifier l'identité et les autorisations nécessaires.
+4. Appeler le Use Case correspondant.
+5. Transformer le résultat en réponse HTTP.
+
+Un Route Handler ne doit pas :
+
+- appeler Prisma directement ;
+- appeler un repository concret directement ;
+- contenir les règles métier principales ;
+- contourner les contrôles d'accès.
+
+# 11. Principes de conception et anti-sur-ingénierie
+
+Les principes de conception sont des outils, pas des obligations mécaniques.
+
+**KISS :** privilégier la solution la plus simple qui répond correctement au besoin.
+
+**YAGNI :** ne pas développer une capacité hypothétique qui n'est pas nécessaire.
+
+**DRY :** éviter les duplications significatives, sans créer une abstraction plus complexe que le code qu'elle remplace.
+
+**SOLID :** appliquer les principes lorsqu'ils améliorent réellement les responsabilités et les dépendances.
+
+**Modularité :** maintenir des frontières claires entre les fonctionnalités.
+
+Règles anti-sur-ingénierie :
+
+- Pas d'interface sans besoin réel.
+- Pas de repository générique universel sans cas d'utilisation concret.
+- Pas de Factory sans complexité de création justifiée.
+- Pas de Strategy tant qu'il n'existe pas plusieurs comportements réels à sélectionner.
+- Pas de Manager ou Helper fourre-tout.
+- Pas de couche supplémentaire pour simplement déplacer du code.
+- Pas de dossier vide.
+- Pas de classe ou de fichier créé uniquement pour respecter une forme théorique.
+- Pas de duplication de configuration ou de logique déjà disponible.
+- Pas de refonte générale lorsqu'une correction locale suffit.
+
+**La meilleure architecture est celle qui sépare clairement les responsabilités avec le minimum de complexité nécessaire.**
+
+# 12. Sécurité
+
+- Ne jamais placer de secrets dans le code versionné.
+- Ne jamais exposer de clés privées ou de jetons sensibles dans le navigateur.
+- Valider les données reçues aux frontières du système.
+- Vérifier les autorisations côté serveur.
+- Ne jamais faire confiance aux rôles, prix ou statuts transmis par le client.
+- Ne pas exposer les erreurs internes ou les informations sensibles.
+- Ne pas journaliser inutilement des données personnelles.
+- Préserver la séparation entre les SDK serveur et navigateur.
+
+Consulter le skill `securite` pour toute modification liée à l'authentification, aux autorisations ou aux données sensibles.
+
+# 13. Performance
+
+- Paginer côté serveur les listes potentiellement volumineuses.
+- Appliquer les filtres et tris dans la requête de données.
+- Ne récupérer que les champs nécessaires.
+- Éviter les requêtes N+1.
+- Éviter les appels réseau inutiles.
+- Ne pas ajouter de cache sans besoin identifié et stratégie d'invalidation.
+- Ne pas introduire Redis, des workers ou une architecture distribuée sans justification.
+
+La performance ne doit pas devenir un prétexte à la complexité.
+
+Consulter le skill `performance` pour les tâches concernées.
+
+# 14. Transactions et opérations sensibles
+
+Les opérations financières doivent rester indépendantes du fournisseur technique utilisé.
+
+- Les règles métier ne dépendent pas d'un SDK de paiement.
+- Les intégrations techniques restent isolées dans Data.
+- Une transaction ne doit pas être déclarée réussie sans confirmation fiable.
+- Les opérations sensibles doivent prendre en compte les doublons et les délais.
+- Ne pas relancer aveuglément une opération après un timeout.
+- Ne pas inventer de frais, commissions, délais ou règles de remboursement.
+
+Le traitement manuel actuel doit continuer à fonctionner tant qu'il fait partie du processus validé.
+
+Consulter `transactions-evolutives` pour toute modification de paiement, versement ou remboursement.
+
+# 15. Base de données et migrations
+
+PostgreSQL et Prisma sont les technologies actuelles de persistance.
+
+Prisma doit rester confiné à Data et aux emplacements techniques autorisés.
+
+Ne fais pas remonter les types Prisma dans les contrats métier.
+
+**Commandes interdites sans autorisation explicite :**
+
+- `prisma migrate dev`
+- `prisma migrate reset`
+- `prisma db push`
+
+Ne modifie pas le schéma ou les migrations sans comprendre les contraintes existantes et les conséquences sur les données.
+
+Ne supprime ou ne réinitialise jamais des données pour résoudre une erreur sans autorisation explicite.
+
+# 16. Méthode de travail
+
+Avant de modifier le code :
+
+1. Examiner la structure et les fichiers existants.
+2. Lire les instructions et skills concernés.
+3. Identifier la fonctionnalité propriétaire.
+4. Identifier la responsabilité et la couche concernées.
+5. Comprendre les contrats et dépendances existants.
+6. Identifier les règles métier à préserver.
+7. Choisir la solution la plus simple qui respecte les contraintes.
+
+Pendant le développement :
+
+- Limiter les modifications au périmètre demandé.
+- Préserver les conventions valides existantes.
+- Ne pas déplacer ou renommer des fichiers sans nécessité.
+- Ne pas ajouter de dépendance sans justification.
+- Ne pas modifier implicitement les règles métier.
+- Ne pas créer de structure vide ou spéculative.
+- Préserver les opérations qui doivent rester atomiques pour garantir la cohérence des données.
+
+Après le développement :
+
+1. Vérifier les imports et les dépendances.
+2. Vérifier les responsabilités des couches.
+3. Exécuter les tests pertinents.
+4. Exécuter le lint, le typecheck ou le build lorsque cela est pertinent.
+5. Signaler les vérifications non exécutées.
+6. Résumer les fichiers modifiés et les décisions importantes.
+
+Pour une refonte large, présenter d'abord un plan de modification avant de toucher à l'ensemble du projet.
+
+# 17. Gestion des incertitudes
+
+Ne devine jamais une règle métier manquante.
+
+Si une décision change sensiblement le comportement ou l'architecture :
+
+- explique brièvement le point bloquant ;
+- présente les conséquences des choix possibles ;
+- demande une clarification ciblée.
+
+Si le détail est secondaire et facilement réversible, choisis une solution simple et indique qu'il s'agit d'une proposition.
+
+le fichier MEMOIRE1 doit nous servir de plan a suivre lorsqu'on execute une tache pour coher qui a ete fait, ce qui manque ainsi on a une memoire au cas un autre agent doit continuer donc c'est un fichier courant en perpectuel update pour s'aligner sur nos actions courantes 
+
+# 18. Format du compte rendu
+
+À la fin d'une tâche, indique :
 
 - ce qui a été réalisé ;
-- les principaux fichiers ou modules concernés ;
-- les choix techniques importants et leur justification ;
+- les fichiers ou fonctionnalités concernés ;
+- les décisions techniques importantes ;
 - les tests et vérifications exécutés ;
-- les limites ou points nécessitant une décision.
+- les éventuels points restant à valider.
 
-Ne prétends jamais qu'un test, un build ou une action a réussi s'il n'a pas été exécuté et vérifié.
+Ne prétends jamais qu'un test ou une commande a réussi si son résultat n'a pas été vérifié.
 
 ---
 
-## Checklist avant de considérer une modification terminée
+# Checklist finale
 
-- [ ] Le besoin fonctionnel demandé est respecté.
-- [ ] Les décisions validées de TopDeal sont respectées.
+- [ ] Le besoin fonctionnel est respecté.
+- [ ] Les décisions validées sont préservées.
 - [ ] Aucun dossier `src` n'a été ajouté.
-- [ ] Le code est placé dans la bonne fonctionnalité et la bonne couche.
-- [ ] Le domaine ne dépend d'aucune technologie concrète.
-- [ ] Les types Prisma, Firebase et autres SDK restent dans les couches techniques appropriées.
-- [ ] Les dépendances sont assemblées dans le Composition Root.
-- [ ] Aucune abstraction ou dépendance inutile n'a été ajoutée.
-- [ ] L'interface respecte le Design System, si elle est concernée.
-- [ ] Les entrées et autorisations sont contrôlées aux frontières appropriées.
-- [ ] Les skills spécialisés ont été consultés lorsque le périmètre le nécessite.
-- [ ] Les listes et recherches volumineuses utilisent une pagination côté serveur.
-- [ ] Les requêtes ne récupèrent pas inutilement des données ou des champs.
-- [ ] Les transactions restent indépendantes du traitement manuel et des fournisseurs externes.
-- [ ] Les intégrations de paiement sont isolées et les confirmations sont vérifiées côté serveur.
-- [ ] Les opérations sensibles prennent en compte les doublons, les délais et les erreurs.
-- [ ] Les vérifications pertinentes ont été exécutées ou leur absence est signalée.
-- [ ] Les incertitudes et décisions en attente sont explicitement mentionnées.
+- [ ] Le code appartient à la bonne fonctionnalité.
+- [ ] Le code appartient à la bonne couche.
+- [ ] Core ne contient que les contrats et modèles correspondant à son périmètre.
+- [ ] Domain contient les implémentations des Use Cases.
+- [ ] Data contient uniquement `repositories/` et `services/`.
+- [ ] Les contrats et implémentations sont séparés.
+- [ ] Les fichiers ont des responsabilités claires.
+- [ ] Les types importants sont séparés lorsque cela est utile.
+- [ ] Les composants spécifiques restent dans leur fonctionnalité.
+- [ ] Les composants génériques restent dans `packages/ui`.
+- [ ] Les erreurs réutilisées proviennent du catalogue centralisé.
+- [ ] Les dépendances respectent les frontières.
+- [ ] Awilix reste dans le Composition Root.
+- [ ] Aucune abstraction inutile n'a été ajoutée.
+- [ ] Aucune règle métier n'a été inventée.
+- [ ] Les contrôles de sécurité sont effectués côté serveur.
+- [ ] Les performances sont prises en compte sans sur-optimisation.
+- [ ] Les vérifications pertinentes ont été exécutées ou leur absence signalée.

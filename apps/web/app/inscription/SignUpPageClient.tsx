@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { SignUpScreen } from "@topdeal/feature-auth/presentation";
-import type { AuthRegistrationResult, BeginAuthRegistrationInput } from "@topdeal/feature-auth/domain";
+import type { AuthRegistrationResult, BeginAuthRegistrationInput } from "@topdeal/feature-auth/core";
 import {
   resolveBeginAuthRegistrationUseCase,
   resolveCheckRegistrationEligibilityUseCase,

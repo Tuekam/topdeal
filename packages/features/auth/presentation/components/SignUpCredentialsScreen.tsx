@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Button, Card, Input } from "@topdeal/ui";
-import type { AuthRegistrationResult } from "../../domain/use-cases/AuthRegistrationResult";
+import type { AuthRegistrationResult } from "../../core";
 
 type Props = {
   isSubmitting: boolean;

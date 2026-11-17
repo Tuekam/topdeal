@@ -3,179 +3,398 @@ name: design-system
 description: Conçoit, implémente, audite et fait évoluer le Design System de TopDeal. À utiliser pour les tokens visuels, composants React, layouts, responsive, accessibilité, cohérence avec les maquettes et intégration dans packages/ui.
 ---
 
-# Skill — Design System TopDeal
+# Design System Skill — TopDeal
 
-## Mission
+## 1. Objectif
 
-Tu es responsable de la cohérence UX/UI et de l'application du Design System TopDeal. Tu aides à concevoir, implémenter, examiner et faire évoluer les interfaces sans inventer de décisions produit ou graphiques.
+Ce skill définit les règles d'organisation et d'implémentation de la couche visuelle de TopDeal.
 
-La spécification complète se trouve dans `references/design-system-reference.md`. La lire avant toute tâche substantielle liée au Design System.
+Il garantit :
 
-## Sources de vérité et statut des décisions
+- Une séparation claire entre interface et logique métier.
+- Une organisation cohérente des écrans et composants.
+- Un design system global réutilisable.
+- Des styles séparés de la logique applicative.
+- Une présentation homogène entre les fonctionnalités.
+- Une interface maintenable et évolutive.
 
-- Les maquettes validées et les décisions explicites de l'utilisateur priment.
-- La référence jointe formalise les décisions documentées, mais précise aussi certains points non confirmés.
-- Distinguer systématiquement :
-  - **Validé** : décision explicitement établie.
-  - **Référence de travail** : valeur proposée ou harmonisée, à confronter aux maquettes.
-  - **À décider** : information absente ; ne pas l'inventer.
-- Ne pas remplacer une décision existante par une préférence personnelle ou une tendance UI.
-- Si une maquette et une règle écrite semblent contradictoires, signaler l'écart et demander arbitrage plutôt que choisir silencieusement.
-- L'utilisateur préfère avancer écran par écran : ne pas concevoir le suivant avant validation explicite du précédent.
+Le design system doit simplifier la construction des interfaces, sans imposer une abstraction inutile à chaque élément visuel.
 
-## Principes non négociables
+## 2. Organisation de la présentation
 
-1. Fidélité aux maquettes : ne pas ajouter d'effets décoratifs ni réinterpréter la direction visuelle.
-2. Réutilisation : rechercher un composant ou pattern existant avant d'en créer un.
-3. Source unique : les valeurs visuelles viennent des tokens, pas de valeurs copiées localement.
-4. Pas de style libre dans les pages : les écrans composent les composants et layouts de `packages/ui`.
-5. Séparation des responsabilités : `packages/ui` gère la présentation et les interactions génériques, jamais la logique métier.
-6. Accessibilité prévue dès la conception : clavier, focus, labels, sémantique, contraste et annonces d'état.
-7. Interface en français, libellés courts et explicites, sans emoji.
-8. Véracité : ne jamais inventer de statistiques, garanties, fonctionnalités ou promesses produit.
-
-## Identité visuelle de référence
-
-- Police : Schibsted Grotesk, graisses 400, 500, 600 et 700, avec police de repli.
-- Thème clair :
-  - page `#FAF9F7`
-  - surface `#FFFFFF`
-  - image tile `#F1EDE8`
-  - border `#E7E3DD`
-  - input border `#D9D3CB`
-  - texte principal `#2B221D`
-  - texte secondaire `#6B6159`
-  - accent `#B8531A`, réservé aux actions principales.
-- Onglet actif : trait brun, pas orange.
-- Référence générale : rythme et marge de contenu 24 px, largeur maximale 1200 px, rayons 12 px pour cartes/champs/recherche, 10 px pour boutons, 6 px pour labels, bordures 1 px.
-- En-tête 76 px, champ standard 46 px, bouton standard 44 px.
-- Pas d'ombre dans la référence claire.
-- Les prix et nombres utilisent des chiffres tabulaires lorsque pertinent.
-
-Ne pas inventer les couleurs success/danger/warning/info, la palette sombre, les breakpoints numériques ou les valeurs absentes. Le thème sombre doit être préparé par tokens sémantiques, mais ses couleurs restent à valider.
-
-## Architecture UI
-
-Le Design System vit dans `packages/ui` et reste indépendant des features métier et de `apps/web`.
+Chaque fonctionnalité possède sa propre couche Presentation.
 
 Structure de référence :
 
-- `tokens/` : couleurs, typographie, espacements, rayons, ombres, breakpoints.
-- `components/` : composants génériques et réutilisables.
-- `layout/` : AppShell, Sidebar, Topbar, PageHeader, ResponsiveContainer.
-- `hooks/` : hooks UI transversaux uniquement.
-- `styles/` : styles globaux, thèmes et styles partagés nécessaires.
-- `index.ts` : exports publics contrôlés.
+```text
+presentation/
+│
+├── screens/
+│
+├── components/
+│
+├── hooks/
+│
+├── styles/
+│
+└── types/
+```
 
-Les composants :
-- reçoivent données et callbacks par props ;
-- n'effectuent pas d'appels réseau ;
-- ne connaissent pas les modèles métier ni les cas d'utilisation ;
-- ne décident pas des permissions métier ;
-- ne dépendent pas de Prisma, Firebase, Awilix ou des Route Handlers.
+Chaque dossier possède une responsabilité distincte.
 
-Les pages/features ne doivent pas importer des fichiers internes de `packages/ui` ni recréer localement ses composants.
+Ne mélange pas arbitrairement les écrans, composants, hooks, styles et types.
 
-## Composants et contrat d'utilisation
+Ne crée pas de dossiers vides pour respecter artificiellement cette structure.
 
-Inventaire de référence : Button, Input, Select, Textarea, Checkbox, Switch, Badge, Card, Modal, Table/DataTable, Pagination, Alert, Toast, Tooltip, Dropdown, Tabs, Avatar, Breadcrumb, Skeleton, Spinner, EmptyState et Icon.
+## 3. Design system global
 
-Les noms définitifs des props et les API doivent correspondre au code réellement implémenté ; les exemples de la spécification ne sont pas la preuve qu'une API existe déjà.
+Emplacement :
 
-Utiliser les composants partagés plutôt que des assemblages Tailwind répétés. Une exception de composition propre à une page doit être limitée, justifiée et documentée.
+`packages/ui/`
 
-Éviter `dangerouslySetInnerHTML`. Ne jamais injecter du HTML non fiable.
+Ce package contient les composants visuels génériques réutilisables entre plusieurs fonctionnalités.
 
-## Responsive
+Exemples :
 
-Le responsive doit préserver la hiérarchie, le sens et les actions de l'écran ; ne pas réduire mécaniquement le desktop.
+- Button.
+- Input.
+- Textarea.
+- Select.
+- Checkbox.
+- Modal.
+- Dialog.
+- Card.
+- Typography.
+- Loader.
+- Avatar.
 
-- Mobile : contenu prioritaire en une colonne, sidebar en panneau ouvrable, tableaux transformés en cartes avec chaque valeur associée à son libellé, cibles tactiles d'au moins 44 × 44 px, safe areas.
-- Tablette : colonnes et panneaux réorganisés selon la largeur ; conserver un tableau seulement s'il reste lisible.
-- Desktop : contenu centré, largeur maximale de référence 1200 px, navigation et densité conformes aux maquettes.
-- Les breakpoints exacts restent à définir et à centraliser dans `tokens/breakpoints.ts`.
+Un composant appartient au design system lorsqu'il représente un élément d'interface générique, indépendant des règles métier d'une fonctionnalité.
 
-Respecter `prefers-reduced-motion`. Les animations restent discrètes et ne retardent pas l'action.
+### Règles
 
-## États et interactions
+Les composants de `packages/ui` ne doivent pas connaître :
 
-Prévoir selon le contexte :
-- chargement initial : skeleton adapté ; spinner pour action ponctuelle ;
-- chargement d'action : bouton loading et prévention des doubles soumissions ;
-- succès : toast ou alert adapté à l'importance ;
-- erreur : message exploitable associé au champ ou à la zone ;
-- aucun résultat : EmptyState et action pertinente si possible ;
-- désactivé : état visuel distinct et véritablement non interactif ;
-- action destructive : libellé clair et confirmation lorsque nécessaire.
+- Firebase.
+- Prisma.
+- Les repositories.
+- Les Use Cases.
+- Les règles métier d'Auth, Annonce, Commande ou Paiement.
 
-Tout contrôle doit avoir un focus visible. Les interactions doivent fonctionner au clavier. Les modales gèrent le focus, Échap et le retour du focus au déclencheur.
+Ils doivent se concentrer sur leur responsabilité visuelle et leurs interactions génériques.
 
-## Accessibilité et sécurité UI
+Ne déplace pas automatiquement un composant dans `packages/ui` simplement parce qu'il est utilisé plusieurs fois dans une fonctionnalité.
 
-- Labels visibles ou programmatiques pour les champs.
-- Erreurs associées aux champs et jamais signalées par la couleur seule.
-- Contrastes à mesurer ; objectif WCAG AA, notamment 4,5:1 pour le texte courant.
-- Icônes interactives avec nom accessible.
-- Images informatives avec texte alternatif ; décoratives ignorées par les lecteurs d'écran.
-- Ordre de tabulation cohérent.
-- Une interface qui masque/désactive une action ne remplace jamais l'autorisation côté serveur.
-- Gérer textes longs, valeurs absentes, erreurs et listes vides.
+## 4. Composants spécifiques aux fonctionnalités
 
-## Méthode de travail
+Emplacement :
 
-Pour chaque demande :
+`packages/features/<feature>/presentation/components/`
 
-1. Identifier l'écran, le composant ou le pattern concerné.
-2. Consulter la maquette et la référence avant de proposer une modification.
-3. Relever les composants et tokens déjà disponibles.
-4. Séparer les exigences validées des points à décider.
-5. Proposer le changement minimal qui respecte les règles.
-6. Si le travail concerne un écran, traiter un seul écran à la fois.
-7. Vérifier responsive, états, accessibilité et cohérence avec les autres écrans.
-8. Comparer le résultat à la maquette ; corriger les écarts avant de demander validation.
-9. Ne pas modifier silencieusement les tokens globaux pour résoudre un problème local.
+Les composants propres à une fonctionnalité restent dans cette fonctionnalité.
 
-## Ordre recommandé de construction
+Exemples pour Auth :
 
-1. Inventorier les maquettes et repérer tokens, composants, layouts et patterns.
-2. Comparer les écrans pour repérer les différences réelles.
-3. Valider les tokens.
-4. Construire les composants fondamentaux.
-5. Construire les composants composites.
-6. Construire les layouts partagés.
-7. Créer une page de démonstration vivante présentant variantes et états.
-8. Vérifier mobile, tablette et desktop.
-9. Intégrer dans les features sans réécrire les styles.
-10. Comparer chaque écran implémenté à sa maquette et obtenir sa validation.
+```text
+auth/
+└── presentation/
+    └── components/
+        ├── LoginForm.tsx
+        ├── RegisterForm.tsx
+        └── PasswordField.tsx
+```
 
-## Points à ne pas inventer
+Ces composants peuvent utiliser les éléments génériques de `packages/ui`.
 
-- Breakpoints exacts.
-- Palette sombre et couleurs success/danger/warning/info.
-- Bibliothèque d'icônes.
-- Détails de navigation responsive non documentés.
-- Colonnes prioritaires de chaque tableau mobile.
-- Durées et courbes d'animation précises.
-- Dimensions d'écran/composant absentes des maquettes.
-- Fonctionnalités, garanties ou textes commerciaux non confirmés.
+Exemple :
 
-## Checklist avant livraison
+Un `LoginForm` peut assembler :
 
-- [ ] Fidélité à la maquette vérifiée.
-- [ ] Tokens utilisés comme source unique.
-- [ ] Schibsted Grotesk chargée avec fallback.
-- [ ] Prix/chiffres tabulaires si pertinent.
-- [ ] Dimensions, rayons et bordures conformes.
-- [ ] Orange réservé aux actions principales.
-- [ ] Onglet actif souligné en brun.
-- [ ] Aucune ombre non prévue.
-- [ ] États nécessaires présents.
-- [ ] Clavier et focus vérifiés.
-- [ ] Modales accessibles.
-- [ ] Tables adaptatives en cartes sur mobile.
-- [ ] Sidebar utilisable sur mobile et desktop.
-- [ ] Cibles tactiles ≥ 44 px.
-- [ ] Safe areas prises en compte.
-- [ ] `prefers-reduced-motion` respecté.
-- [ ] Aucune promesse produit non démontrée.
-- [ ] Écran comparé à sa maquette.
+- Un composant Input.
+- Un composant Button.
+- Un composant Checkbox.
+
+Le formulaire reste spécifique à Auth.
+
+### Règle de réutilisation
+
+Avant de déplacer un composant dans `packages/ui`, vérifie :
+
+1. S'il possède une responsabilité véritablement générique.
+2. S'il est indépendant du métier d'une fonctionnalité.
+3. Si son API peut être utilisée sans connaître les règles métier de son origine.
+
+Ne transforme pas les composants métier en composants génériques artificiellement.
+
+## 5. Screens
+
+Emplacement :
+
+`presentation/screens/`
+
+Les screens représentent les écrans complets d'une fonctionnalité.
+
+Exemples :
+
+- LoginScreen.
+- RegisterScreen.
+- ForgotPasswordScreen.
+- ResetPasswordScreen.
+
+Un screen est responsable de l'assemblage de l'interface d'un écran.
+
+Il peut :
+
+- Assembler les composants.
+- Déclencher les interactions de présentation.
+- Utiliser les hooks nécessaires.
+- Gérer les états propres à l'écran.
+
+Il ne doit pas :
+
+- Communiquer directement avec Firebase.
+- Appeler Prisma.
+- Implémenter les repositories.
+- Contenir les règles métier principales.
+- Regrouper toute la logique applicative dans un composant volumineux.
+
+Un écran doit rester lisible et se concentrer sur son rôle de composition.
+
+## 6. Components
+
+Emplacement :
+
+`presentation/components/`
+
+Les composants regroupent les éléments visuels propres à une fonctionnalité.
+
+Ils peuvent :
+
+- Afficher des informations.
+- Recevoir des propriétés.
+- Émettre des événements.
+- Gérer un état local d'interface.
+- Utiliser les composants du design system.
+
+Ils ne doivent pas devenir des emplacements pour les opérations métier ou les accès techniques.
+
+Évite les composants qui regroupent plusieurs responsabilités indépendantes.
+
+Ne crée pas systématiquement un composant pour chaque élément JSX.
+
+La séparation doit améliorer réellement la lisibilité ou la réutilisation.
+
+## 7. Hooks
+
+Emplacement :
+
+`presentation/hooks/`
+
+Les hooks encapsulent la logique de présentation réutilisable.
+
+Exemples :
+
+- `useLogin.ts`
+- `useRegister.ts`
+- `useAuthSession.ts`
+
+Ils peuvent gérer :
+
+- Les états de chargement.
+- Les états d'interface.
+- Les interactions utilisateur.
+- L'orchestration des appels aux mécanismes applicatifs.
+- Les états d'erreur destinés à la présentation.
+
+Un hook ne doit pas :
+
+- Accéder directement à Prisma.
+- Importer un SDK Firebase pour contourner les couches prévues.
+- Implémenter les règles métier.
+- Devenir un conteneur de toutes les opérations d'une fonctionnalité.
+
+Ne crée pas un hook simplement pour déplacer quelques lignes sans améliorer l'organisation.
+
+## 8. Styles
+
+Emplacement :
+
+`presentation/styles/`
+
+Les styles propres aux fonctionnalités doivent être séparés des autres responsabilités.
+
+Exemples :
+
+```text
+presentation/
+├── screens/
+│   └── LoginScreen.tsx
+│
+├── components/
+│   └── LoginForm.tsx
+│
+└── styles/
+    ├── LoginScreen.styles.ts
+    └── LoginForm.styles.ts
+```
+
+### Règles
+
+- Ne mélange pas les définitions de styles avec les contrats métier.
+- Ne place pas les styles dans les fichiers de modèles.
+- Respecte la technologie de styling déjà utilisée.
+- Évite de dupliquer les mêmes valeurs visuelles.
+- Utilise les tokens du design system lorsqu'ils existent.
+- Ne crée pas un système de thèmes supplémentaire sans besoin réel.
+
+Pour Tailwind CSS, conserve les conventions et mécanismes déjà établis dans le projet.
+
+N'introduis pas un second système de styling pour résoudre un problème déjà couvert par Tailwind.
+
+## 9. Types de présentation
+
+Emplacement :
+
+`presentation/types/`
+
+Ce dossier contient uniquement les types nécessaires à la présentation.
+
+Exemples :
+
+- LoginFormValues.
+- RegisterFormValues.
+- PasswordFieldProps.
+
+Les types métier restent dans Core.
+
+Les types techniques des fournisseurs restent dans les couches techniques concernées.
+
+Ne duplique pas un modèle métier dans Presentation simplement pour faciliter son utilisation.
+
+Ne crée pas systématiquement un fichier de types pour chaque composant.
+
+## 10. Gestion des états visuels
+
+Les états d'interface doivent être clairement identifiés.
+
+Exemples :
+
+- Loading.
+- Success.
+- Error.
+- Empty.
+- Disabled.
+
+Les composants doivent afficher les états correspondant aux résultats des opérations applicatives.
+
+La présentation ne doit pas inventer une réussite lorsque l'opération métier a échoué.
+
+Les messages affichés doivent être cohérents avec le système centralisé de gestion des erreurs.
+
+Ne transforme pas les erreurs techniques internes en messages directement visibles pour l'utilisateur.
+
+## 11. Formulaires
+
+Les formulaires doivent séparer :
+
+- Les champs et leur présentation.
+- La gestion des valeurs.
+- La validation des données.
+- Le déclenchement des opérations métier.
+
+Les règles de validation métier ne doivent pas être exclusivement définies dans les composants visuels.
+
+Les validations de présentation peuvent fournir un retour immédiat à l'utilisateur.
+
+Les validations de sécurité et d'intégrité doivent également être réalisées aux frontières serveur appropriées.
+
+Ne duplique pas inutilement les règles de validation entre plusieurs composants.
+
+## 12. Responsive design et accessibilité
+
+Les interfaces doivent fonctionner sur les formats d'écran ciblés par le projet.
+
+Respecte :
+
+- Les conventions responsive existantes.
+- Les états de focus.
+- Les interactions au clavier.
+- Les libellés accessibles.
+- Les contrastes suffisants.
+- Les retours visuels des interactions.
+- Les dimensions adaptées aux différentes interfaces.
+
+Ne sacrifie pas l'accessibilité pour reproduire uniquement une maquette.
+
+## 13. Organisation et composition des composants
+
+Privilégie la composition plutôt que les composants excessivement configurables.
+
+Un composant doit exposer uniquement les propriétés nécessaires à son rôle.
+
+Évite :
+
+- Les composants universels contenant de nombreuses conditions.
+- Les propriétés inutilisées.
+- Les composants avec trop de responsabilités.
+- Les composants qui connaissent plusieurs fonctionnalités métier.
+- Les abstractions visuelles prématurées.
+
+Si deux composants sont réellement différents, ne les force pas à partager une abstraction artificielle.
+
+## 14. Anti-sur-ingénierie
+
+Ne crée pas automatiquement :
+
+- Un composant pour chaque élément HTML.
+- Un hook pour chaque fonction.
+- Un fichier de styles pour chaque petite expression.
+- Un système de thèmes parallèle.
+- Un composant universel pour toutes les interfaces.
+- Une bibliothèque de composants redondante avec `packages/ui`.
+
+Réutilise les composants existants avant d'en créer de nouveaux.
+
+Privilégie une interface simple, lisible et cohérente.
+
+## 15. Méthode de modification
+
+Avant de modifier une interface :
+
+1. Examiner les composants existants.
+2. Identifier les éléments déjà disponibles dans `packages/ui`.
+3. Identifier les composants spécifiques à la fonctionnalité.
+4. Identifier les hooks et styles concernés.
+5. Vérifier les types existants.
+6. Respecter les conventions visuelles du projet.
+7. Modifier uniquement les éléments nécessaires.
+
+Après modification :
+
+- Vérifier les interactions.
+- Vérifier les états de chargement et d'erreur.
+- Vérifier le responsive design.
+- Vérifier l'accessibilité.
+- Vérifier les imports.
+- Vérifier l'absence de dépendances techniques interdites.
+
+## 16. Vérification finale
+
+Avant de terminer, vérifier :
+
+- Les screens sont dans `presentation/screens`.
+- Les composants spécifiques sont dans `presentation/components`.
+- Les composants génériques sont dans `packages/ui`.
+- Les hooks sont dans `presentation/hooks`.
+- Les styles sont dans `presentation/styles`.
+- Les types de présentation sont dans `presentation/types`.
+- Les règles métier ne sont pas implémentées dans les composants.
+- Les SDK techniques ne sont pas importés directement dans les écrans.
+- Les composants restent suffisamment petits et compréhensibles.
+- Les éléments existants sont réutilisés lorsqu'ils répondent déjà au besoin.
+- Aucune abstraction visuelle inutile n'a été introduite.
+
+## Règle finale
+
+La présentation doit être indépendante des détails techniques et des règles métier.
+
+**Un composant doit présenter, un hook doit orchestrer la présentation, un screen doit assembler l'écran et le design system doit fournir les éléments visuels génériques.**

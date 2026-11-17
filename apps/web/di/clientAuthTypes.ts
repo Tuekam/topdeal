@@ -1,9 +1,18 @@
-import type { FirebaseWebSignInProvider, FetchWebSessionGateway } from "@topdeal/feature-auth/data/client";
-import type { BeginAuthRegistrationUseCase, CheckRegistrationEligibilityUseCase, CompleteAuthProfileFromWebUseCase, CompleteEmailVerificationUseCase, CompleteGoogleRegistrationUseCase, SendEmailVerificationUseCase, SignInUseCase } from "@topdeal/feature-auth/domain";
+import type {
+  AuthSignInProvider,
+  WebSessionGateway,
+  BeginAuthRegistrationUseCase,
+  CheckRegistrationEligibilityUseCase,
+  CompleteAuthProfileFromWebUseCase,
+  CompleteEmailVerificationUseCase,
+  CompleteGoogleRegistrationUseCase,
+  SendEmailVerificationUseCase,
+  SignInUseCase,
+} from "@topdeal/feature-auth/core";
 
 export type ClientAuthCradle = {
-  signInProvider: FirebaseWebSignInProvider;
-  webSessionGateway: FetchWebSessionGateway;
+  signInProvider: AuthSignInProvider;
+  webSessionGateway: WebSessionGateway;
   signInUseCase: SignInUseCase;
   sendEmailVerificationUseCase: SendEmailVerificationUseCase;
   completeEmailVerificationUseCase: CompleteEmailVerificationUseCase;

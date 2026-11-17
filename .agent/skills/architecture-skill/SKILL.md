@@ -1,322 +1,519 @@
 ---
 name: architecture
-description: Architecture logicielle de TopDeal — monorepo pnpm, apps/web Next.js, packages/core, packages/ui et packages/features, séparation Domain/Data/Presentation, ports et adaptateurs, Awilix et Composition Root, Route Handlers, PostgreSQL/Prisma, Firebase Auth, MinIO, frontières inter-modules, sécurité, performance, SOLID, DRY, KISS, YAGNI et design patterns. Utilise ce skill pour concevoir, expliquer, auditer ou faire évoluer l'architecture, ajouter une feature, déplacer une responsabilité ou choisir une abstraction.
+description: Architecture logicielle de TopDeal — monorepo pnpm, apps/web Next.js, packages/core, packages/ui et packages/features, séparation Domain/Data/Presentation, ports et adaptateurs, Awilix et Composition Root, Route Handlers, PostgreSQL/Prisma, Firebase Auth, MinIO, frontières inter-modules, sécurité, performance, SOLID, DRY, KISS, YAGNI et design patterns. 
 ---
 
-# Architecture logicielle de TopDeal
+# Architecture Skill — TopDeal
 
-L'architecture doit permettre de faire évoluer la marketplace sans concentrer les règles métier dans l'application Web, sans coupler le Domain aux fournisseurs techniques et sans créer d'abstractions prématurées. La règle centrale est simple : **le métier définit ses besoins ; les détails techniques les implémentent**.
+## 1. Objectif
 
-## 1. Sources de vérité et statut des décisions
+Ce skill définit les règles d'organisation architecturale du projet TopDeal.
 
-La documentation d'architecture technique TopDeal et les décisions explicites de l'utilisateur priment sur les habitudes générales de développement.
+Son objectif est de garantir une architecture :
 
-Toujours distinguer :
-- **VALIDÉ** : décision explicitement retenue.
-- **CIBLE** : organisation prévue, dont l'implémentation réelle doit être vérifiée.
-- **À CONFIRMER** : proposition ou détail non arrêté.
+- Modulaire et organisée par fonctionnalité.
+- Atomique et fondée sur des responsabilités précises.
+- Faiblement couplée aux technologies.
+- Facile à comprendre, tester et maintenir.
+- Évolutive sans sur-ingénierie.
 
-Ne transforme jamais une proposition en règle validée. Ne déduis pas qu'une structure existe dans le dépôt parce qu'elle apparaît dans la documentation cible. Pour un dépôt existant, inspecte d'abord les fichiers réels.
+L'architecture doit répondre aux besoins réels du projet.
 
-## 2. Vue globale
+Ne cherche jamais à appliquer une architecture théorique au détriment de la simplicité.
 
-```text
-Navigateur Web / futur client mobile
-              │ HTTP / API
-              ▼
-           apps/web
-   Next.js, React, Route Handlers
-       Awilix / bootstrap
-              │ appelle
-              ▼
-      packages/features/*
-       Domain / Data / Presentation
-              │ ports
-              ▼
-       Adaptateurs techniques
-        Prisma / Firebase / MinIO
-              │
-              ▼
- PostgreSQL / Firebase Auth / MinIO
+## 2. Principes fondamentaux
 
-packages/core : contrats et modèles transversaux
-packages/ui   : composants visuels partagés
-```
+### 2.1. Une responsabilité par fichier
 
-La stack de référence est pnpm workspace, Next.js App Router, React, TypeScript, Awilix, PostgreSQL, Prisma, Firebase Auth et MinIO. Une application Kotlin Multiplatform est envisagée ultérieurement et doit consommer la même API ; les modalités OpenAPI restent à préciser.
+Chaque fichier doit avoir une responsabilité clairement identifiable.
 
-## 3. Monorepo et modules
+Exemples :
 
-```text
-topdeal/
-├── apps/
-│   └── web/
-│       ├── app/
-│       ├── components/providers/
-│       ├── bootstrap/
-│       ├── di/container.ts
-│       ├── config/env.ts
-│       ├── public/
-│       └── package.json
-├── packages/
-│   ├── core/
-│   │   ├── models/
-│   │   ├── interfaces/
-│   │   ├── enums/
-│   │   ├── errors/
-│   │   └── utils/
-│   ├── ui/
-│   │   ├── tokens/
-│   │   ├── components/
-│   │   ├── layout/
-│   │   ├── hooks/
-│   │   └── styles/
-│   └── features/
-│       ├── auth/
-│       ├── annonce/
-│       ├── commande/
-│       ├── paiement/
-│       ├── conversation/
-│       ├── favoris/
-│       ├── proposition/
-│       ├── versement/
-│       ├── remboursement/
-│       ├── troc/
-│       ├── affiliation/
-│       ├── verification-identite/
-│       ├── notification/
-│       ├── litige/
-│       ├── support/
-│       └── administration/
-└── package.json
-```
+- Un Use Case représente une opération métier.
+- Un Repository représente une responsabilité d'accès aux données.
+- Un Service encapsule une intégration technique.
+- Un modèle représente une structure de données.
+- Un Hook encapsule une logique réutilisable de présentation.
+- Un composant représente une responsabilité visuelle.
 
-- **Aucun dossier `src`** ne doit être ajouté.
-- Chaque package possède son `package.json` et déclare ses dépendances.
-- Le package racine orchestre les scripts ; il ne reçoit pas de logique métier.
-- Les packages internes utilisent l'espace de noms `@topdeal`, par exemple `@topdeal/ui` et `@topdeal/feature-annonce`.
-- Les groupes de routes Next.js entre parenthèses sont un classement d'écrans, pas des modules métier.
+Évite de regrouper plusieurs opérations indépendantes dans une même classe.
 
-## 4. Une feature
+L'atomicité ne signifie cependant pas qu'il faut créer un fichier pour chaque petite fonction.
+
+Un fichier peut contenir plusieurs éléments étroitement liés lorsqu'ils ne justifient pas une séparation indépendante.
+
+### 2.2. Séparation des contrats et implémentations
+
+Les contrats doivent être séparés de leurs implémentations.
+
+Les interfaces définissent ce dont une couche a besoin.
+
+Les classes concrètes réalisent ces contrats.
+
+Exemple :
+
+Contrat :
+
+`CreateTaskRepository.ts`
+
+Implémentation :
+
+`TaskCreateRepositoryImpl.ts`
+
+Use Case :
+
+`CreateTaskUseCase.ts`
+
+Implémentation :
+
+`CreateTaskUseCaseImpl.ts`
+
+Ne mélange jamais les responsabilités de définition et d'implémentation lorsque leur séparation est nécessaire à la frontière architecturale.
+
+## 3. Organisation générale
+
+TopDeal utilise une architecture Feature-First.
+
+Structure de référence :
 
 ```text
-packages/features/annonce/
-├── domain/
-│   ├── entities/       # si le domaine le justifie
-│   ├── value-objects/  # si nécessaire
-│   ├── use-cases/
-│   ├── interfaces/     # ports du module
-│   └── errors/
-├── data/
-│   ├── repositories/
-│   ├── adapters/
-│   ├── mappers/        # si nécessaire
-│   └── models/         # modèles techniques si nécessaires
-├── presentation/
-│   ├── components/
-│   ├── hooks/
-│   └── states/
-└── package.json
+packages/
+│
+├── core/
+│   ├── models/
+│   ├── usecases/
+│   └── repositories/
+│
+├── features/
+│   └── auth/
+│       │
+│       ├── core/
+│       │   ├── models/
+│       │   ├── usecases/
+│       │   └── repositories/
+│       │
+│       ├── domain/
+│       │   └── usecases/
+│       │
+│       ├── data/
+│       │   ├── repositories/
+│       │   └── services/
+│       │
+│       └── presentation/
+│           ├── screens/
+│           ├── components/
+│           ├── hooks/
+│           ├── styles/
+│           └── types/
+│
+└── ui/
 ```
 
-Les sous-dossiers indiqués comme facultatifs ne sont créés que lorsqu'un besoin concret apparaît. Pas de dossier vide, de classe vide ou d'abstraction sans consommateur.
+Cette structure représente les responsabilités disponibles.
 
-### Domain
+Elle n'impose pas de créer tous les dossiers systématiquement.
 
-Porte les règles métier, Use Cases, ports/interfaces, erreurs métier, entités et Value Objects utiles. Il décrit ce que TopDeal doit faire, sans connaître le stockage, le protocole ou l'interface.
+Un dossier ne doit exister que lorsqu'il contient des éléments nécessaires.
 
-**N'y place jamais :** React, hooks React, Prisma Client, modèles Prisma, SDK Firebase, SDK MinIO, Next.js, Awilix, requêtes HTTP ou accès direct à la base.
+## 4. Core
 
-### Data
+Core définit les contrats et les modèles.
 
-Implémente les ports du Domain et traduit les besoins métier vers les systèmes techniques.
+Il existe deux niveaux de Core.
 
-- `repositories/` : implémentations concrètes des contrats de repository.
-- `adapters/` : intégrations avec Prisma, Firebase Auth, MinIO ou autres fournisseurs.
-- `mappers/` : conversions entre enregistrements techniques et modèles métier, seulement si nécessaires.
-- `models/` : modèles techniques propres à Data, seulement si nécessaires.
+### 4.1. Core global
 
-Data exécute les opérations techniques ; elle ne devient pas propriétaire des règles métier.
+Emplacement :
 
-### Presentation
+`packages/core/`
 
-Adapte les Use Cases à l'expérience utilisateur : composants spécifiques à la feature, hooks React et états de présentation (`loading`, `success`, `error`, `empty`, données affichées). Elle ne contient ni requêtes Prisma, ni secrets, ni règles métier centrales.
+Il contient exclusivement les éléments réellement partagés entre plusieurs fonctionnalités.
 
-## 5. Sens des dépendances
+Dossiers autorisés :
+
+- `models/`
+- `usecases/`
+- `repositories/`
+
+Responsabilités :
+
+**models/**
+
+Contient les modèles communs.
+
+**usecases/**
+
+Contient les contrats de Use Cases réellement partagés.
+
+**repositories/**
+
+Contient les contrats de repositories réellement partagés.
+
+Ne place pas un élément dans le Core global simplement pour le rendre accessible à plusieurs fichiers.
+
+### 4.2. Core d'une fonctionnalité
+
+Emplacement :
+
+`packages/features/<feature>/core/`
+
+Il contient les contrats et modèles spécifiques à la fonctionnalité.
+
+Exemple :
+
+`packages/features/auth/core/`
+
+Une interface exclusivement utilisée par Auth doit rester dans le Core d'Auth.
+
+Même principe pour les modèles spécifiques.
+
+Dossiers autorisés :
+
+- `models/`
+- `usecases/`
+- `repositories/`
+
+### 4.3. Types et modèles
+
+Les types importants et réutilisables doivent être définis dans des fichiers dédiés.
+
+Ne disperse pas les définitions de types dans les implémentations.
+
+Ne duplique pas un modèle déjà existant.
+
+Ne fais jamais remonter directement les types techniques d'un fournisseur dans les contrats métier.
+
+## 5. Domain
+
+Emplacement :
+
+`packages/features/<feature>/domain/`
+
+Domain contient uniquement :
+
+`usecases/`
+
+Il implémente les contrats de Use Cases définis dans Core.
+
+Chaque Use Case doit représenter une opération métier indépendante.
+
+Exemple :
 
 ```text
-Presentation ─────► Domain / Use Cases
-                         ▲
-                         │ contrats implémentés
-                        Data
+domain/
+└── usecases/
+    ├── login/
+    │   └── LoginUseCaseImpl.ts
+    │
+    ├── register/
+    │   └── RegisterUseCaseImpl.ts
+    │
+    ├── logout/
+    │   └── LogoutUseCaseImpl.ts
+    │
+    └── verify-session/
+        └── VerifySessionUseCaseImpl.ts
 ```
 
-Le Domain définit les abstractions nécessaires. Data les implémente. Presentation appelle les actions métier sans importer les détails d'implémentation. Ne crée pas de dépendance circulaire.
+Exemple d'implémentation :
 
-Un repository est déclaré du côté Domain et son implémentation réside dans Data. Un port appartient à la feature qui en a besoin, sauf s'il est réellement transversal.
+```typescript
+export class CreateTaskUseCaseImpl
+  implements CreateTaskUseCase {
 
-## 6. Core partagé
+  constructor(
+    private readonly repository: CreateTaskRepository
+  ) {}
 
-`packages/core` ne contient que des éléments réellement utilisés par plusieurs features, stables et indépendants d'un métier particulier : modèles transversaux, interfaces, enums, erreurs et utilitaires purs.
+  async execute(input: CreateTaskInput) {
+    return this.repository.create(input);
+  }
+}
+```
 
-| À mettre dans Core | À ne pas y déplacer |
-|---|---|
-| Contrat partagé par plusieurs features | Repository métier d'une seule feature |
-| Enum réellement transversal | Enum propre à Annonce ou Commande |
-| Erreur générique stable | Règle métier d'un module |
-| Utilitaire pur et générique | Service global fourre-tout |
+Les exemples doivent être adaptés aux contrats réels du projet.
 
-En cas de doute, garde l'élément dans la feature propriétaire. Core n'est ni un fourre-tout, ni un dossier global de services/repositories, ni un package dépendant de Next.js, React, Prisma, Firebase ou Awilix.
+### Règles
 
-## 7. Application Web et Route Handlers
+Un Use Case ne doit pas regrouper plusieurs opérations métier indépendantes.
 
-`apps/web` est l'application Next.js : pages, entrées HTTP, providers, configuration, bootstrap et assemblage des dépendances. Elle n'est pas propriétaire des règles métier.
+Domain ne doit pas dépendre :
 
-Un Route Handler suit ce flux :
-1. lire la requête HTTP ;
-2. valider le format, les paramètres et le corps à la frontière HTTP ;
-3. authentifier l'appelant et vérifier ses autorisations côté serveur ;
-4. résoudre le Use Case via le conteneur ;
-5. appeler le Use Case avec des données adaptées ;
-6. convertir le résultat ou l'erreur en réponse HTTP.
+- De Prisma.
+- De Firebase SDK.
+- De Next.js.
+- De React.
+- D'Awilix.
+- Des implémentations concrètes de Data.
 
-**Interdit :** accès direct à Prisma ou à un repository concret depuis un Route Handler ; duplication des règles métier dans le handler.
+Domain dépend des contrats, pas des technologies.
 
-Les pages composent les composants de présentation des features et les composants génériques de `packages/ui`.
+## 6. Data
 
-## 8. Awilix et Composition Root
+Emplacement :
 
-Awilix est assemblé dans `apps/web`, notamment sous `di/` et `bootstrap/`. Le Composition Root enregistre les implémentations concrètes et construit les Use Cases.
+`packages/features/<feature>/data/`
 
-- Le Domain ne connaît pas Awilix.
-- Les composants navigateur ne résolvent pas les dépendances du conteneur serveur.
-- Les classes concrètes et SDK sont enregistrés à la frontière de composition.
-- Ne duplique pas l'assemblage dans les Use Cases ou les composants.
+Data contient exclusivement :
 
-La stratégie exacte des scopes Awilix (notamment par requête) n'est pas arrêtée dans la documentation de référence : ne l'invente pas ; inspecte le code et propose une décision si nécessaire.
+- `repositories/`
+- `services/`
 
-## 9. Persistance et services externes
+### 6.1. Repositories
 
-| Technologie | Responsabilité / frontière |
-|---|---|
-| PostgreSQL | Base relationnelle retenue |
-| Prisma | Accès aux données, confiné à Data/adapters |
-| Firebase Auth | Fournisseur d'authentification derrière un port |
-| MinIO | Stockage objet derrière un port |
+Les repositories implémentent les contrats définis dans Core.
 
-L'UID Firebase est distinct de l'UUID interne TopDeal. Les modèles Prisma ne traversent pas vers Domain ou Presentation. Les détails de liaison de compte, URLs signées, transactions, idempotence et cohérence inter-modules doivent être définis au besoin ; ne pas les supposer.
+Exemple :
 
-## 10. Communication entre features
+```typescript
+export class TaskCreateRepositoryImpl
+  implements CreateTaskRepository {
 
-Chaque feature reste propriétaire de ses règles et données métier. Une autre feature ne manipule pas directement ses tables ou repositories internes.
+  constructor(
+    private readonly service: TaskService
+  ) {}
 
-- Consommer les contrats publics du module propriétaire.
-- Éviter les imports profonds non documentés.
-- Éviter les dépendances circulaires.
-- Ne déplacer un concept vers Core que s'il répond au critère de transversalité.
-- Choisir appel direct, événement ou autre mécanisme selon le besoin réel ; le mécanisme global n'est pas imposé par la documentation.
+  async create(input: CreateTaskInput) {
+    return this.service.create(input);
+  }
+}
+```
 
-## 11. POO, modularité et principes de conception
+Un repository doit avoir une responsabilité clairement identifiée.
 
-Les principes sont des outils de décision, pas une obligation d'ajouter des couches.
+Ne crée pas un repository universel qui regroupe toutes les opérations sans justification.
 
-| Principe | Application proportionnée |
-|---|---|
-| POO | Regrouper état et comportement cohérents ; éviter les objets sans responsabilité claire. |
-| Modularité | Définir des frontières métier et des contrats ciblés. |
-| SOLID | Responsabilités cohérentes, interfaces ciblées, dépendances inversées ; éviter l'application mécanique. |
-| DRY | Mutualiser une règle réellement répétée ; deux ressemblances superficielles ne suffisent pas toujours. |
-| KISS | Choisir la solution la plus simple qui répond correctement au besoin. |
-| YAGNI | Ne pas construire une capacité hypothétique sans besoin identifié. |
-| LLD | Clarifier classes, contrats, responsabilités et interactions utiles avant implémentation. |
-| Performance | Mesurer le goulot avant cache, index, parallélisme ou nouvelle infrastructure. |
-| Sécurité | Valider côté serveur, vérifier identité/permissions/propriété, protéger secrets et traiter les fichiers comme non fiables. |
+### 6.2. Services
 
-### Choisir un design pattern
+Les services encapsulent les intégrations techniques.
 
-| Famille | Exemples | Question à poser |
-|---|---|---|
-| Création | Factory, Builder | La création est-elle réellement complexe ou variable ? |
-| Structure | Adapter, Facade, Decorator, Proxy | Faut-il traduire, simplifier, enrichir ou contrôler l'accès ? |
-| Comportement | Strategy, Observer, State, Command | Existe-t-il plusieurs comportements ou des interactions qui le justifient ? |
+Exemples :
 
-**Exemple anti-sur-ingénierie :** une seule règle de taxe fixe ne justifie pas une hiérarchie Strategy. Une méthode simple suffit. Réévaluer lorsque plusieurs algorithmes métier réels doivent être sélectionnés.
+- Firebase Auth.
+- Prisma.
+- MinIO.
+- Services externes.
 
-N'ajoute pas plusieurs patterns ensemble sans expliquer le problème distinct que chacun résout.
+Un service ne doit pas devenir un emplacement fourre-tout contenant toutes les opérations d'une fonctionnalité.
 
-## 12. Sécurité, erreurs et performance
+Les services ne doivent pas contenir les règles métier principales.
 
-- Les contrôles d'autorisation sont côté serveur ; masquer un bouton ne protège pas une ressource.
-- Vérifier l'identité, le rôle, la propriété et le contexte métier avant une opération sensible.
-- Valider les entrées aux frontières ; ne pas faire confiance au navigateur.
-- Ne jamais exposer les secrets dans le bundle client ou les réponses.
-- Ne pas transmettre les erreurs internes, traces ou détails sensibles au client.
-- Traiter les fichiers uploadés comme des entrées non fiables.
-- Mesurer latence, volume et fréquence avant d'ajouter une optimisation.
-- Toute stratégie cache doit préciser invalidation et cohérence ; ne pas introduire Redis ou un cache sans besoin mesuré.
+### 6.3. Règles Data
 
-Les règles métier de sécurité détaillées, transactions, idempotence et politiques de rétention doivent provenir des spécifications correspondantes, pas être inventées par le skill d'architecture.
+- Ne fais pas dépendre Domain de Data.
+- Ne fais pas remonter les types Prisma dans Domain.
+- Ne place pas les implémentations de repositories dans Domain.
+- Ne crée pas automatiquement des dossiers supplémentaires.
+- Ne duplique pas les intégrations techniques.
 
-## 13. Ajouter une fonctionnalité
+## 7. Presentation
 
-1. Lire la spécification fonctionnelle concernée et identifier les règles confirmées.
-2. Identifier la feature propriétaire ; ne pas créer un module uniquement pour une page.
-3. Définir l'action métier et les entrées/sorties du Use Case.
-4. Identifier les ports nécessaires du point de vue du Domain.
-5. Ajouter uniquement les modèles métier utiles.
-6. Implémenter les ports dans Data avec Prisma ou les adaptateurs appropriés.
-7. Ajouter le mapping uniquement si les modèles diffèrent réellement.
-8. Enregistrer les dépendances dans le Composition Root.
-9. Exposer l'entrée HTTP via Route Handler si nécessaire.
-10. Construire Presentation avec les composants partagés de `packages/ui`.
-11. Ajouter les tests correspondant aux règles et frontières touchées.
-12. Vérifier les imports, dépendances, erreurs, autorisations et absence de régression.
+Chaque fonctionnalité possède sa propre couche Presentation.
 
-## 14. Procédure d'audit
+Structure :
 
-Pour chaque problème relevé, indiquer le fichier, la responsabilité actuelle, la règle concernée, l'impact réel et une correction proportionnée. Vérifier dans cet ordre :
-1. frontières de packages et feature propriétaire ;
-2. couche et sens des dépendances ;
-3. imports interdits dans Domain ;
-4. accès direct à Prisma hors Data ;
-5. responsabilités de Route Handlers et Composition Root ;
-6. duplication ou abstraction prématurée ;
-7. sécurité, erreurs, performance et testabilité selon le périmètre.
+```text
+presentation/
+│
+├── screens/
+├── components/
+├── hooks/
+├── styles/
+└── types/
+```
 
-Ne fais pas une chasse abstraite aux violations SOLID : explique pourquoi un écart nuit réellement au projet.
+### 7.1. Screens
 
-## 15. Pièges à éviter
+Contient les écrans complets de la fonctionnalité.
 
-- Ajouter un dossier `src`.
-- Créer des dossiers facultatifs vides.
-- Mettre tous les repositories ou Use Cases dans un dossier global.
-- Déplacer une règle métier dans `apps/web`, `packages/ui` ou Data.
-- Importer Prisma/Firebase/Next/Awilix depuis Domain.
-- Appeler Prisma directement depuis un Route Handler.
-- Mettre un contrat propre à une feature dans Core.
-- Faire dépendre une feature des tables internes d'une autre.
-- Créer une interface, une Factory, une Strategy ou un service générique sans besoin démontré.
-- Confondre Firebase UID et identifiant interne TopDeal.
-- Supposer que le futur client KMP impose déjà une implémentation mobile dans le monorepo Web.
+Un écran assemble les composants nécessaires à une interface.
 
-## 16. Checklist avant livraison
+Il ne doit pas contenir les implémentations des opérations métier.
 
-- [ ] Le besoin et les règles métier sont compris.
-- [ ] La feature propriétaire est identifiée.
-- [ ] Aucun dossier `src` ajouté.
-- [ ] Les couches Domain/Data/Presentation ont des responsabilités nettes.
-- [ ] Domain ne dépend d'aucun détail technique.
-- [ ] Les ports sont définis là où le métier en a besoin.
-- [ ] Prisma reste dans Data/adapters.
-- [ ] Route Handler ne porte pas la logique métier.
-- [ ] Awilix est assemblé dans le Composition Root.
-- [ ] Core ne contient que du réellement transversal.
-- [ ] Aucune dépendance circulaire ou import profond injustifié.
-- [ ] Aucun pattern ou dossier ajouté sans besoin concret.
-- [ ] Identité, autorisations, secrets et erreurs sont traités côté serveur.
-- [ ] Tests adaptés ajoutés ou limites explicitement signalées.
-- [ ] VALIDÉ / CIBLE / À CONFIRMER clairement distingués.
+### 7.2. Components
 
-## Références
+Contient les composants spécifiques à la fonctionnalité.
 
-Lire `references/architecture-reference.md` pour la synthèse détaillée de l'architecture et des frontières. Les spécifications fonctionnelles restent la source de vérité des règles métier.
+Un composant propre à Auth reste dans Auth.
+
+Un composant générique et réellement réutilisable peut être placé dans `packages/ui`.
+
+Ne confonds pas composant métier et composant de design system.
+
+### 7.3. Hooks
+
+Contient les hooks de présentation.
+
+Un hook doit encapsuler une logique de présentation ou d'interaction réutilisable.
+
+Ne transforme pas les hooks en emplacement pour les règles métier ou les accès directs à la base de données.
+
+### 7.4. Styles
+
+Contient les styles propres à la fonctionnalité.
+
+La présentation visuelle doit rester séparée des responsabilités métier et des accès aux données.
+
+Ne mélange pas artificiellement les définitions de styles avec les modèles et contrats métier.
+
+Respecte les conventions de styling déjà adoptées dans le projet.
+
+### 7.5. Types
+
+Contient les types propres à la présentation.
+
+Les modèles métier doivent rester dans Core.
+
+Les types techniques propres à l'interface ne doivent pas polluer le Core.
+
+## 8. Gestion centralisée des erreurs
+
+Les erreurs réutilisables doivent être définies dans un catalogue centralisé adapté à leur périmètre.
+
+Exemple :
+
+```typescript
+export const AUTH_ERRORS = {
+  USER_NOT_FOUND: {
+    code: "AUTH_USER_NOT_FOUND",
+    message: "Utilisateur introuvable",
+  },
+} as const;
+```
+
+Utilisation :
+
+```typescript
+throw new AppError(AUTH_ERRORS.USER_NOT_FOUND);
+```
+
+Cet exemple suppose l'existence d'un modèle d'erreur commun adapté.
+
+Règles :
+
+- Ne répète pas les messages d'erreur.
+- Utilise des codes stables.
+- Centralise les messages modifiables.
+- Préserve les informations techniques utiles au diagnostic.
+- Ne révèle pas les détails internes au client.
+- Distingue erreurs métier et erreurs techniques.
+
+Ne crée pas plusieurs systèmes de gestion des erreurs concurrents.
+
+Une erreur spécifique à une fonctionnalité doit rester dans son périmètre lorsqu'elle n'est pas partagée.
+
+## 9. Flux des dépendances
+
+Les dépendances doivent respecter les responsabilités des couches.
+
+Flux logique :
+
+```text
+Presentation
+     |
+     v
+   Domain
+     |
+     v
+    Core
+```
+
+Data implémente les contrats définis dans Core.
+
+Le Composition Root assemble les implémentations concrètes.
+
+```text
+          Composition Root
+                 |
+          +------+------+
+          |             |
+          v             v
+        Domain         Data
+          |             |
+          +------Core---+
+```
+
+Domain ne doit jamais importer une implémentation concrète de Data.
+
+Data peut dépendre des contrats de Core.
+
+Presentation doit déclencher les opérations métier à travers les mécanismes d'intégration prévus.
+
+## 10. Injection des dépendances
+
+TopDeal utilise Awilix.
+
+Awilix doit rester dans le Composition Root de `apps/web`.
+
+Règles :
+
+- Les dépendances sont injectées explicitement.
+- Les Use Cases ne connaissent pas le conteneur.
+- Les repositories ne récupèrent pas leurs dépendances depuis un conteneur global.
+- Évite les dépendances cachées.
+- N'introduis pas un second système d'injection.
+
+Le Composition Root assemble les implémentations et leurs dépendances.
+
+## 11. Règles anti-sur-ingénierie
+
+L'architecture doit rester proportionnée aux besoins.
+
+Interdictions par défaut :
+
+- Pas d'interface sans frontière ou besoin réel.
+- Pas de repository générique universel sans justification.
+- Pas de Factory sans complexité de création réelle.
+- Pas de Strategy sans plusieurs comportements réels.
+- Pas de Manager ou Helper fourre-tout.
+- Pas de couche supplémentaire pour simplement déplacer du code.
+- Pas de dossier vide.
+- Pas de duplication de mécanismes existants.
+- Pas de création de fichiers uniquement pour satisfaire une convention théorique.
+
+Avant chaque abstraction, vérifie qu'elle simplifie réellement le code.
+
+## 12. Méthode de refonte
+
+Lorsqu'une fonctionnalité existante doit être refondue :
+
+1. Examiner l'ensemble de son implémentation.
+2. Identifier les responsabilités actuelles.
+3. Identifier les dépendances et les contrats existants.
+4. Repérer les responsabilités mélangées.
+5. Identifier les types dispersés ou dupliqués.
+6. Identifier les erreurs non centralisées.
+7. Identifier les violations des frontières architecturales.
+8. Proposer une structure cible.
+9. Présenter le plan de refonte avant une modification importante.
+10. Refactoriser progressivement en préservant le comportement fonctionnel.
+
+Ne commence jamais par déplacer aveuglément les fichiers.
+
+Ne réécris pas les règles métier sans validation.
+
+Ne supprime pas une fonctionnalité existante sans justification.
+
+## 13. Vérification architecturale
+
+Avant de considérer une fonctionnalité comme terminée, vérifier :
+
+- Chaque fichier possède une responsabilité identifiable.
+- Les contrats sont séparés de leurs implémentations.
+- Les Use Cases sont atomiques.
+- Les repositories sont correctement implémentés.
+- Core ne contient que les contrats et modèles correspondant à son périmètre.
+- Domain ne contient que les Use Cases.
+- Data ne contient que repositories et services.
+- Presentation sépare écrans, composants, hooks, styles et types.
+- Les erreurs réutilisables sont centralisées.
+- Les dépendances respectent les frontières.
+- Aucun SDK technique ne pollue Domain.
+- Aucune abstraction inutile n'a été introduite.
+- Les comportements fonctionnels existants sont préservés.
+
+## 14. Règle finale
+
+En cas de doute entre une solution simple et une solution plus abstraite, privilégie la solution simple si elle respecte les responsabilités, les contrats et les besoins réels.
+
+**Une bonne architecture n'est pas celle qui possède le plus de couches ou de fichiers. C'est celle dans laquelle chaque élément a une responsabilité claire et où les dépendances restent maîtrisées.**

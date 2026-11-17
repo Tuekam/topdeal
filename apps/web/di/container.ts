@@ -8,9 +8,18 @@ import {
 import { createDatabaseClient } from "@topdeal/database";
 import {
   FirebaseAdminIdentityProvider,
-  PrismaAuthUserRepository,
+  AuthUserRepositoryImpl,
 } from "@topdeal/feature-auth/data";
-import { CheckAuthRegistrationEligibilityUseCase, CompleteAuthProfileUseCase, CreateWebSessionUseCase } from "@topdeal/feature-auth/domain";
+import {
+  CheckAuthRegistrationEligibilityUseCaseImpl,
+  CompleteAuthProfileUseCaseImpl,
+  CreateWebSessionUseCaseImpl,
+} from "@topdeal/feature-auth/domain";
+import type {
+  CheckAuthRegistrationEligibilityUseCase,
+  CompleteAuthProfileUseCase,
+  CreateWebSessionUseCase,
+} from "@topdeal/feature-auth/core";
 import type { AuthCradle } from "./types";
 
 let containerInstance: AwilixContainer<AuthCradle> | null = null;
@@ -29,10 +38,10 @@ export function buildContainer(): AwilixContainer<AuthCradle> {
   container.register({
     prisma: asValue(createDatabaseClient(connectionString)),
     identityProvider: asClass(FirebaseAdminIdentityProvider).singleton(),
-    userRepository: asClass(PrismaAuthUserRepository).singleton(),
-    createWebSessionUseCase: asClass(CreateWebSessionUseCase).singleton(),
-    checkAuthRegistrationEligibilityUseCase: asClass(CheckAuthRegistrationEligibilityUseCase).singleton(),
-    completeAuthProfileUseCase: asClass(CompleteAuthProfileUseCase).singleton(),
+    userRepository: asClass(AuthUserRepositoryImpl).singleton(),
+    createWebSessionUseCase: asClass(CreateWebSessionUseCaseImpl).singleton(),
+    checkAuthRegistrationEligibilityUseCase: asClass(CheckAuthRegistrationEligibilityUseCaseImpl).singleton(),
+    completeAuthProfileUseCase: asClass(CompleteAuthProfileUseCaseImpl).singleton(),
   });
 
   return container;

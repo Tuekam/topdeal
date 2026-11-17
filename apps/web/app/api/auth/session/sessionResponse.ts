@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { AUTH_SESSION_MAX_AGE_MS } from "@topdeal/feature-auth/domain";
-import type { CreateWebSessionResult } from "@topdeal/feature-auth/domain";
+import { AUTH_SESSION_MAX_AGE_MS } from "@topdeal/feature-auth/core";
+import type { CreateWebSessionResult } from "@topdeal/feature-auth/core";
 
 const SESSION_COOKIE_NAME = "topdeal_session";
 

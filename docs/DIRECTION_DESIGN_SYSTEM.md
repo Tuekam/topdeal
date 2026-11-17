@@ -117,22 +117,3 @@ Au moment du relevé initial, les fichiers suivants existaient mais étaient vid
 - `packages/ui/index.ts`
 
 Depuis ce relevé initial, les tokens de base ont commencé à être implémentés. Consulter [MEMOIRE1.md](../MEMOIRE1.md) pour l’état vérifié actuel.
-
-## Suivi actuel
-
-Ce relevé documente le cadrage initial des maquettes. Les tokens de base ont depuis été implémentés. Consulter [MEMOIRE1.md](../MEMOIRE1.md) pour le plan, l’état vérifié, les validations et la prochaine étape.
-
-## Journal des changements
-
-### 14 novembre 2026 — cadrage initial
-
-- Consulté les instructions du projet, les skills Design System, architecture, nomenclature, évolutivité, performance et sécurité, ainsi que les documents fonctionnels pertinents.
-- Parcouru les maquettes fournies pour identifier l’identité visuelle commune et les écarts.
-- Vérifié que les principaux fichiers de tokens et styles de `packages/ui` sont vides.
-- Aucun code UI ni token modifié pendant cette revue initiale ; les écarts et décisions ouvertes ont été consignés.
-
-### 14 novembre 2026 — première fondation des tokens
-
-- Le suivi courant a été déplacé dans `MEMOIRE1.md`.
-- Les tokens de base confirmés et le thème clair ont été ajoutés ; aucune palette d’état ni valeur de breakpoint n’a été inventée.
-- Les vérifications de cette étape sont consignées dans `MEMOIRE1.md`.

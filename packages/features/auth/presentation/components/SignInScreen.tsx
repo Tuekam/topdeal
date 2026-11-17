@@ -2,10 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { Button, Card, Input } from "@topdeal/ui";
-import type { SignInInput, SignInResult } from "../../domain/use-cases/SignInUseCase";
+import type { SendEmailVerificationResult, SignInInput, SignInResult } from "../../core";
 import { ProfileCompletionScreen } from "./ProfileCompletionScreen";
 import { EmailVerificationScreen } from "./EmailVerificationScreen";
-import type { SendEmailVerificationResult } from "../../domain/use-cases/SendEmailVerificationUseCase";
 
 export type SignInScreenSubmit = (input: SignInInput) => Promise<SignInResult>;
 export type SignInScreenProps = {

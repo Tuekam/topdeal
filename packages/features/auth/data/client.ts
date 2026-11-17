@@ -1,4 +1,4 @@
 "use client";
 
-export { FirebaseWebSignInProvider } from "./adapters/FirebaseWebSignInProvider";
-export { FetchWebSessionGateway } from "./adapters/FetchWebSessionGateway";
+export { FirebaseWebSignInProvider } from "./services/FirebaseWebSignInProvider";
+export { FetchWebSessionGateway } from "./services/FetchWebSessionGateway";

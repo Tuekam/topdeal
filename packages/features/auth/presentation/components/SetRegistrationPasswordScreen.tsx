@@ -1,6 +1,6 @@
 "use client";
 
-import type { AuthRegistrationResult } from "../../domain/use-cases/AuthRegistrationResult";
+import type { AuthRegistrationResult } from "../../core";
 import { PasswordEntryForm } from "./PasswordEntryForm";
 
 type Props = {

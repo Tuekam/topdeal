@@ -2,7 +2,24 @@
 
 import { asClass, createContainer, InjectionMode, type AwilixContainer } from "awilix";
 import { FirebaseWebSignInProvider, FetchWebSessionGateway } from "@topdeal/feature-auth/data/client";
-import { BeginAuthRegistrationUseCase, CheckRegistrationEligibilityUseCase, CompleteAuthProfileFromWebUseCase, CompleteEmailVerificationUseCase, CompleteGoogleRegistrationUseCase, SendEmailVerificationUseCase, SignInUseCase } from "@topdeal/feature-auth/domain";
+import {
+  BeginAuthRegistrationUseCaseImpl,
+  CheckRegistrationEligibilityUseCaseImpl,
+  CompleteAuthProfileFromWebUseCaseImpl,
+  CompleteEmailVerificationUseCaseImpl,
+  CompleteGoogleRegistrationUseCaseImpl,
+  SendEmailVerificationUseCaseImpl,
+  SignInUseCaseImpl,
+} from "@topdeal/feature-auth/domain";
+import type {
+  BeginAuthRegistrationUseCase,
+  CheckRegistrationEligibilityUseCase,
+  CompleteAuthProfileFromWebUseCase,
+  CompleteEmailVerificationUseCase,
+  CompleteGoogleRegistrationUseCase,
+  SendEmailVerificationUseCase,
+  SignInUseCase,
+} from "@topdeal/feature-auth/core";
 import type { ClientAuthCradle } from "./clientAuthTypes";
 
 let containerInstance: AwilixContainer<ClientAuthCradle> | null = null;
@@ -12,13 +29,13 @@ export function buildClientAuthContainer(): AwilixContainer<ClientAuthCradle> {
   container.register({
     signInProvider: asClass(FirebaseWebSignInProvider).singleton(),
     webSessionGateway: asClass(FetchWebSessionGateway).singleton(),
-    signInUseCase: asClass(SignInUseCase).singleton(),
-    sendEmailVerificationUseCase: asClass(SendEmailVerificationUseCase).singleton(),
-    completeEmailVerificationUseCase: asClass(CompleteEmailVerificationUseCase).singleton(),
-    completeAuthProfileFromWebUseCase: asClass(CompleteAuthProfileFromWebUseCase).singleton(),
-    beginAuthRegistrationUseCase: asClass(BeginAuthRegistrationUseCase).singleton(),
-    completeGoogleRegistrationUseCase: asClass(CompleteGoogleRegistrationUseCase).singleton(),
-    checkRegistrationEligibilityUseCase: asClass(CheckRegistrationEligibilityUseCase).singleton(),
+    signInUseCase: asClass(SignInUseCaseImpl).singleton(),
+    sendEmailVerificationUseCase: asClass(SendEmailVerificationUseCaseImpl).singleton(),
+    completeEmailVerificationUseCase: asClass(CompleteEmailVerificationUseCaseImpl).singleton(),
+    completeAuthProfileFromWebUseCase: asClass(CompleteAuthProfileFromWebUseCaseImpl).singleton(),
+    beginAuthRegistrationUseCase: asClass(BeginAuthRegistrationUseCaseImpl).singleton(),
+    completeGoogleRegistrationUseCase: asClass(CompleteGoogleRegistrationUseCaseImpl).singleton(),
+    checkRegistrationEligibilityUseCase: asClass(CheckRegistrationEligibilityUseCaseImpl).singleton(),
   });
   return container;
 }

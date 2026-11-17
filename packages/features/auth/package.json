@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./index.ts",
+    "./core": "./core/index.ts",
     "./domain": "./domain/index.ts",
     "./data": "./data/index.ts",
     "./data/client": "./data/client.ts",

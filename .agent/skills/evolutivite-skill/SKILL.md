@@ -3,277 +3,397 @@ name: evolutivite
 description: Principes d'évolutivité et d'indépendance technologique de TopDeal. À utiliser pour toute création ou modification de code, choix d'architecture, ajout d'une fonctionnalité, intégration technique, refactorisation ou revue. L'agent doit concevoir chaque partie pour que les technologies concrètes (base SQL ou NoSQL, Prisma ou autre ORM, fournisseur d'authentification, stockage, paiement, messagerie, framework) puissent être remplacées avec un impact limité, sans surarchitecture ni abstraction inutile.
 ---
 
-# Concevoir TopDeal pour évoluer et remplacer ses technologies
+# Evolutivite Skill — TopDeal
 
-## Objectif
+## 1. Objectif
 
-TopDeal est un projet en évolution. Les choix techniques actuels sont des choix d'implémentation, pas des dépendances irréversibles.
+Ce skill définit les règles permettant de faire évoluer TopDeal sans introduire de dépendances techniques inutiles dans le métier.
 
-Le code doit permettre de remplacer une technologie par une autre avec un impact localisé et maîtrisé. Par exemple :
+Il vise à garantir :
 
-- PostgreSQL peut être remplacé par une base NoSQL.
-- Prisma peut être remplacé par Drizzle, un autre ORM ou un accès natif.
-- Firebase Auth peut être remplacé par un autre fournisseur d'identité.
-- MinIO peut être remplacé par S3, un stockage local ou un autre fournisseur.
-- Un prestataire de paiement, de notification ou de messagerie peut changer.
-- Next.js ou l'interface Web peuvent évoluer sans déplacer les règles métier dans le framework.
+- Un faible couplage entre les couches.
+- Une séparation claire entre métier et technologie.
+- Des dépendances explicites.
+- Le remplacement possible des fournisseurs techniques.
+- Une évolution progressive des fonctionnalités.
+- Une architecture simple et maintenable.
 
-**Règle centrale : le métier TopDeal ne doit pas dépendre des détails des technologies utilisées pour l'exécuter.**
+L'évolutivité doit être obtenue par une bonne séparation des responsabilités, et non par une multiplication des abstractions.
 
-L'évolutivité ne signifie pas prévoir toutes les technologies futures ni créer une abstraction pour chaque classe. Elle signifie séparer correctement les responsabilités, isoler les décisions techniques et garder les frontières explicites.
+## 2. Principe fondamental : dépendre des contrats
 
-## 1. Règles non négociables
+Les couches métier ne doivent pas dépendre des implémentations techniques.
 
-1. Le Domain ne dépend d'aucun framework, ORM, fournisseur externe ou détail d'infrastructure.
-2. Les contrats utilisés par le métier sont définis du côté intérieur de l'architecture, pas imposés par la technologie concrète.
-3. Les dépendances pointent vers les abstractions et le métier, jamais du métier vers les implémentations.
-4. Les technologies concrètes restent confinées dans la couche Data ou dans les adaptateurs d'infrastructure appropriés.
-5. Les Use Cases expriment les actions métier et orchestrent les contrats nécessaires ; ils ne manipulent pas directement Prisma, Firebase, MinIO ou les SDK de prestataires.
-6. Les Route Handlers et composants React ne contiennent pas de logique métier persistante.
-7. Un changement de fournisseur doit conduire principalement au remplacement d'un adaptateur et à sa configuration, pas à une réécriture du métier.
-8. Ne pas créer d'abstraction sans besoin réel : appliquer KISS, YAGNI et DRY avec discernement.
-9. Ne jamais prétendre qu'un remplacement sera « sans aucun changement ». L'objectif est de limiter et maîtriser les changements, pas de promettre une compatibilité magique.
-10. Toute nouvelle dépendance technologique doit avoir une frontière claire et une raison documentée.
+Core définit les contrats nécessaires.
 
-## 2. Direction des dépendances
+Domain implémente les Use Cases en utilisant ces contrats.
 
-La règle de dépendance est orientée vers le cœur métier :
+Data implémente les contrats techniques avec les fournisseurs concrets.
+
+Exemple :
 
 ```text
-Presentation / Entrées
-        |
-        v
-     Use Cases
-        |
-        v
-      Domain
-        ^
-        |
-Ports / contrats nécessaires au métier
-        ^
-        |
-Adaptateurs Data / Infrastructure
-        |
-        v
-Technologies concrètes
-(Prisma, PostgreSQL, Firebase, MinIO...)
+                 Domain
+                    |
+                    v
+             LoginRepository
+                    ^
+                    |
+                    |
+          LoginRepositoryImpl
+                    |
+                    v
+             FirebaseAuthService
 ```
 
-Le schéma exprime une règle de dépendance, pas nécessairement une arborescence exacte.
+Le contrat `LoginRepository` ne doit pas connaître Firebase.
 
-- Le Domain ne connaît que le métier et les contrats dont il a besoin.
-- Les Use Cases dépendent des contrats, pas des classes concrètes.
-- Les adaptateurs implémentent ces contrats et traduisent entre le monde externe et les modèles internes.
-- Le Composition Root assemble les implémentations concrètes.
-- La Presentation transmet les entrées et affiche les résultats ; elle ne choisit pas comment les données sont stockées.
+L'implémentation `LoginRepositoryImpl` peut utiliser Firebase à travers un service technique.
 
-## 3. Exemple : rendre le stockage remplaçable
+Ainsi, remplacer Firebase ne nécessite pas de réécrire le Use Case.
 
-### À éviter
+## 3. Isolation des technologies
 
-```ts
-// Use Case couplé à Prisma
-import { prisma } from "@/lib/prisma";
+Les technologies doivent rester dans les couches appropriées.
 
-export class CreateAnnonceUseCase {
-  async execute(input: CreateAnnonceInput) {
-    return prisma.annonce.create({
-      data: input,
-    });
-  }
+| Technologie | Emplacement |
+|---|---|
+| Firebase Auth | Data |
+| Prisma | Data |
+| PostgreSQL | Infrastructure technique de Data |
+| MinIO | Data |
+| Next.js | apps/web |
+| React | Presentation |
+| Awilix | Composition Root |
+
+Ne laisse pas les SDK techniques contaminer les contrats métier.
+
+### Exemple incorrect
+
+```typescript
+import { UserCredential } from "firebase/auth";
+
+export interface LoginRepository {
+  login(email: string, password: string): Promise<UserCredential>;
 }
 ```
 
-Problèmes :
-- Le métier connaît Prisma.
-- Le modèle de persistance risque de devenir le modèle métier.
-- Le remplacement de Prisma ou de la base touche directement le Use Case.
-- Les tests métier nécessitent de connaître l'infrastructure.
+Le contrat dépend directement de Firebase.
 
-### Préférer
+### Exemple correct
 
-Contrat défini dans la frontière intérieure appropriée :
-
-```ts
-export interface CreateAnnonceRepository {
-  create(annonce: Annonce): Promise<Annonce>;
+```typescript
+export interface LoginRepository {
+  login(input: LoginInput): Promise<LoginResult>;
 }
 ```
 
-Use Case indépendant de l'implémentation :
+Les types exposés par le contrat doivent appartenir au domaine métier ou à son Core.
 
-```ts
-export class CreateAnnonceUseCase {
+## 4. Responsabilité des repositories
+
+Un repository représente une frontière entre les besoins métier et les mécanismes d'accès aux données.
+
+Il ne doit pas exposer les détails du fournisseur technique.
+
+Exemple :
+
+```typescript
+export interface LoginRepository {
+  login(input: LoginInput): Promise<LoginResult>;
+}
+```
+
+Implémentation :
+
+```typescript
+export class UserLoginRepositoryImpl
+  implements LoginRepository {
+
   constructor(
-    private readonly repository: CreateAnnonceRepository,
+    private readonly authService: FirebaseAuthService
   ) {}
 
-  async create(input: CreateAnnonceInput): Promise<Annonce> {
-    const annonce = Annonce.create(input);
-    return this.repository.create(annonce);
+  async login(input: LoginInput): Promise<LoginResult> {
+    return this.authService.login(input);
   }
 }
 ```
 
-Implémentation Prisma confinée à Data :
+L'implémentation traduit les besoins du contrat vers le fournisseur technique.
 
-```ts
-export class CreateAnnonceRepositoryImpl
-  implements CreateAnnonceRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+Ne transforme pas les repositories en services métier.
 
-  async create(annonce: Annonce): Promise<Annonce> {
-    const record = await this.prisma.annonce.create({
-      data: toPrismaData(annonce),
-    });
+Ne leur attribue pas des responsabilités qui appartiennent aux Use Cases.
 
-    return toDomainAnnonce(record);
+## 5. Responsabilité des services techniques
+
+Les services encapsulent les communications avec les technologies externes.
+
+Exemples :
+
+- FirebaseAuthService.
+- FirebaseAdminService.
+- PrismaTaskService.
+- MinioStorageService.
+
+Ils doivent masquer les détails techniques à leurs consommateurs.
+
+Un service peut :
+
+- Communiquer avec un SDK.
+- Exécuter une requête technique.
+- Gérer les particularités du fournisseur.
+- Convertir une réponse technique vers une structure adaptée à Data.
+
+Un service ne doit pas décider des règles métier.
+
+Évite les services universels regroupant plusieurs fournisseurs ou plusieurs fonctionnalités indépendantes.
+
+## 6. Injection des dépendances
+
+TopDeal utilise Awilix pour assembler les dépendances.
+
+L'injection doit être explicite.
+
+Exemple :
+
+```typescript
+export class LoginUseCaseImpl
+  implements LoginUseCase {
+
+  constructor(
+    private readonly repository: LoginRepository
+  ) {}
+
+  async execute(input: LoginInput) {
+    return this.repository.login(input);
   }
 }
 ```
 
-Si Prisma est remplacé, l'agent crée une autre implémentation du contrat et adapte le mapping. Le Use Case ne change que si le besoin métier ou le contrat métier change.
+Le Use Case reçoit son contrat par injection.
 
-Les noms et signatures sont des exemples illustratifs : respecter la nomenclature et les interfaces réellement définies dans TopDeal.
+Il ne doit pas :
 
-## 4. Remplacer SQL par NoSQL : ne pas confondre indépendance et équivalence
+- Instancier directement `UserLoginRepositoryImpl`.
+- Importer Firebase.
+- Accéder directement à Prisma.
+- Récupérer ses dépendances dans un conteneur global.
+- Utiliser un Service Locator.
 
-Une base relationnelle et une base NoSQL n'offrent pas nécessairement les mêmes garanties, transactions, contraintes, requêtes ou modèles de données.
+### Composition Root
 
-Pour faciliter une migration :
+Le Composition Root assemble les dépendances concrètes.
 
-- Ne pas exposer les objets Prisma, les types SQL ou les documents MongoDB dans le Domain.
-- Ne pas faire remonter les relations Prisma (`include`, `select`, objets générés) dans les Use Cases.
-- Définir les contrats selon les besoins métier : créer une annonce, retrouver une annonce, lister avec filtres, changer un statut.
-- Retourner des modèles métier ou des résultats applicatifs stables, pas des enregistrements de base.
-- Garder les mappings entre modèle de persistance et modèle métier dans l'adaptateur.
-- Éviter que le métier dépende de particularités d'une base, comme un identifiant auto-incrémenté, un champ JSON propre à un moteur ou une jointure SQL.
-- Identifier explicitement les besoins de cohérence, d'unicité, de transaction, de pagination et de recherche.
-- Vérifier comment la nouvelle base peut satisfaire ces besoins avant de déclarer le remplacement simple.
+Il appartient à `apps/web`.
 
-Ne pas construire un « plus petit dénominateur commun » qui détruit les capacités utiles des bases. Les différences techniques doivent être gérées dans l'adaptateur et documentées lorsqu'elles ont un effet sur le comportement.
+Exemple conceptuel :
 
-## 5. Ports et adaptateurs par domaine technique
+```typescript
+const authService = new FirebaseAuthService();
 
-Créer une frontière lorsque le métier ou l'application dépend d'une capacité externe.
+const loginRepository = new UserLoginRepositoryImpl(
+  authService
+);
 
-| Capacité | Ce que le cœur doit exprimer | Ce qui reste à l'extérieur |
-|---|---|---|
-| Persistance | opérations métier de lecture/écriture | SQL, NoSQL, ORM, requêtes |
-| Authentification | identité authentifiée et contexte utilisateur nécessaires | Firebase Auth, autre IdP, SDK |
-| Fichiers | enregistrer, lire ou supprimer un fichier via un contrat adapté | MinIO, S3, fournisseur cloud |
-| Paiement | initier ou suivre une opération selon les règles métier | API et SDK du prestataire |
-| Notifications | demander l'envoi d'une notification | Firebase Cloud Messaging, e-mail, SMS |
-| Temps | obtenir l'heure courante si le cas d'usage doit la contrôler | horloge système |
-| Identifiants | obtenir un identifiant selon le besoin | stratégie de génération concrète |
+const loginUseCase = new LoginUseCaseImpl(
+  loginRepository
+);
+```
 
-Ne pas créer automatiquement tous ces ports dès le départ. Les introduire lorsqu'une fonctionnalité les utilise réellement.
+Dans l'application réelle, respecte le mécanisme Awilix déjà adopté.
 
-## 6. Composition Root et injection de dépendances
+Ne crée pas un second système d'injection.
 
-- Les implémentations concrètes sont instanciées et associées aux contrats dans le Composition Root / conteneur Awilix de `apps/web`.
-- Les Use Cases reçoivent leurs dépendances par injection.
-- Les features ne doivent pas importer directement le conteneur global.
-- Aucun Use Case ne doit appeler `container.resolve()` lui-même.
-- Les composants React ne doivent pas construire des repositories ni instancier des clients d'infrastructure.
-- Le remplacement d'un fournisseur doit se faire en modifiant l'assemblage et l'adaptateur, sans propager le changement dans toutes les features.
-- Ne pas transformer l'injection de dépendances en service locator global.
+## 7. Évolution des fournisseurs techniques
 
-## 7. Modèles et contrats stables
+Une technologie doit pouvoir être remplacée sans modifier les règles métier lorsque les contrats restent compatibles.
 
-- Séparer les modèles métier des DTO HTTP, modèles de base et objets SDK.
-- Ne pas retourner un objet Prisma directement depuis une Route Handler ou un Use Case.
-- Convertir les entrées externes en types applicatifs contrôlés à la frontière.
-- Convertir les résultats internes en DTO de sortie à la frontière HTTP.
-- Les types partagés dans `packages/core` doivent être réellement transversaux ; ne pas y déplacer les modèles propres à une technologie.
-- Ne pas exposer un type d'ORM dans une interface de repository.
-- Les contrats doivent représenter les besoins réels de la feature, pas recopier l'API d'un fournisseur.
+Exemple :
 
-## 8. Transactions, erreurs et capacités spécifiques
+Aujourd'hui :
 
-L'abstraction ne doit pas cacher les garanties importantes.
+```text
+LoginRepository
+       |
+       v
+UserLoginRepositoryImpl
+       |
+       v
+FirebaseAuthService
+```
 
-- Définir les frontières transactionnelles selon les invariants métier.
-- Ne pas laisser les Use Cases dépendre d'une transaction Prisma.
-- Si une opération nécessite une transaction, définir un contrat adapté à cette unité de travail, ou une opération atomique cohérente dans le repository.
-- Ne pas supposer qu'une transaction SQL peut être reproduite à l'identique en NoSQL.
-- Traduire les erreurs techniques en erreurs applicatives compréhensibles à la frontière de l'adaptateur.
-- Ne pas faire dépendre le métier des codes d'erreur d'un fournisseur.
-- Si une technologie fournit une capacité spécifique indispensable, l'exprimer clairement dans un contrat dédié plutôt que de prétendre qu'elle est universelle.
+Évolution possible :
 
-## 9. Éviter la surarchitecture
+```text
+LoginRepository
+       |
+       v
+UserLoginRepositoryImpl
+       |
+       v
+AlternativeAuthService
+```
 
-L'évolutivité n'est pas une excuse pour multiplier les couches.
+Le Use Case conserve son contrat et sa responsabilité.
 
-Ne pas :
-- créer une interface pour chaque classe sans besoin de substitution ou de frontière ;
-- créer un GenericRepository universel qui masque les besoins métier ;
-- créer des abstractions génériques pour des scénarios hypothétiques ;
-- introduire des factories, stratégies, managers ou providers sans variation réelle ;
-- concevoir dès aujourd'hui une compatibilité simultanée avec toutes les bases et tous les fournisseurs ;
-- ajouter des packages ou dossiers vides « au cas où » ;
-- faire passer des données à travers plusieurs DTO identiques sans raison.
+Le remplacement doit être limité aux éléments techniques concernés.
 
-Faire :
-- isoler les technologies aux frontières ;
-- commencer par le contrat minimal nécessaire ;
-- garder les opérations proches du vocabulaire métier ;
-- choisir la solution la plus simple qui préserve une possibilité réaliste de remplacement ;
-- ajouter une abstraction lorsque deux implémentations existent, qu'un remplacement est prévu, qu'une dépendance externe doit être isolée ou que les tests l'exigent réellement.
+Ne crée cependant pas plusieurs implémentations hypothétiques simplement pour anticiper un remplacement qui n'est pas prévu.
 
-Exemple : si TopDeal n'a qu'une seule règle fixe de calcul de frais, une méthode métier simple suffit. Ne pas introduire Strategy avant qu'il existe plusieurs algorithmes à choisir ou une vraie variation.
+Une abstraction est justifiée lorsqu'elle représente une frontière réelle.
 
-## 10. Procédure obligatoire avant d'ajouter une technologie
+## 8. Évolution des modèles et contrats
 
-Pour chaque nouvelle intégration, l'agent doit :
+Les modèles et contrats doivent rester indépendants des technologies.
 
-1. Identifier le besoin métier ou applicatif précis.
-2. Identifier le code qui ne doit pas connaître la technologie.
-3. Définir le contrat minimal côté intérieur, si une frontière est nécessaire.
-4. Implémenter l'adaptateur dans la couche externe appropriée.
-5. Ajouter le mapping entre types externes et types internes.
-6. Enregistrer l'implémentation dans le Composition Root.
-7. Tester le comportement métier sans démarrer la technologie réelle.
-8. Tester l'adaptateur avec la technologie réelle ou un environnement d'intégration adapté.
-9. Documenter les contraintes non portables : transactions, cohérence, limites, pagination, coûts ou formats.
-10. Vérifier qu'aucune dépendance concrète ne s'est propagée dans le Domain ou les Use Cases.
+Lorsqu'un contrat évolue :
 
-## 11. Checklist de revue avant de terminer
+1. Identifier tous ses consommateurs.
+2. Identifier toutes ses implémentations.
+3. Vérifier les conséquences sur les fonctionnalités concernées.
+4. Adapter les éléments nécessaires.
+5. Vérifier les tests et les usages existants.
 
-- [ ] Le Domain compile et fonctionne sans importer de framework, ORM ou SDK externe.
-- [ ] Les Use Cases dépendent de contrats, pas d'implémentations concrètes.
-- [ ] Aucun type Prisma, SQL, NoSQL ou SDK fournisseur ne traverse une frontière interne.
-- [ ] Les adaptateurs traduisent les modèles et erreurs externes.
-- [ ] Les implémentations sont assemblées dans le Composition Root.
-- [ ] La Presentation ne contient pas de logique métier ni d'accès direct à la base.
-- [ ] Les transactions et garanties de cohérence sont explicites.
-- [ ] Les tests du métier peuvent fonctionner avec des implémentations de test simples.
-- [ ] L'abstraction répond à un besoin réel et n'est pas une anticipation gratuite.
-- [ ] Le changement de technologie aurait un périmètre de modification identifiable.
+Ne modifie pas un contrat partagé sans examiner son impact sur les autres fonctionnalités.
 
-## 12. Exemples de couplage à détecter
+Évite de faire dépendre un modèle métier de structures techniques.
 
-| Mauvais signe | Direction attendue |
-|---|---|
-| `import { PrismaClient }` dans un Use Case | injection d'un contrat de repository |
-| `Prisma.AnnnonceWhereInput` dans le Domain | critères métier indépendants |
-| `FirebaseUser` dans un modèle métier | identité applicative contrôlée |
-| `NextRequest` dans un Use Case | entrée applicative indépendante du protocole HTTP |
-| `Minio.Client` dans une feature métier | contrat de stockage si nécessaire |
-| composant React qui appelle Prisma | appel via une frontière serveur |
-| `container.resolve()` dans le Domain | injection depuis le Composition Root |
-| réponse API contenant un document de base brut | DTO de sortie explicite |
+Ne crée pas de modèles parallèles identiques sans nécessité.
 
-## 13. Règle de décision finale
+## 9. Gestion des erreurs et découplage
 
-Avant de valider du code, pose-toi ces questions :
+Les erreurs techniques doivent être traduites à la frontière appropriée.
 
-1. Si Prisma disparaît demain, quelles parties devront changer ?
-2. Si PostgreSQL est remplacé par MongoDB, les règles métier restent-elles intactes ?
-3. Si Firebase Auth est remplacé, les Use Cases doivent-ils être réécrits ?
-4. Si le framework Web change, le Domain reste-t-il utilisable ?
-5. L'abstraction créée aujourd'hui répond-elle à un besoin réel ou seulement à une hypothèse ?
+Exemple :
 
-Si une technologie peut être remplacée uniquement en modifiant son adaptateur, son mapping, sa configuration et éventuellement les tests d'intégration, la séparation est bonne. Si le changement traverse les règles métier et toutes les features, le couplage doit être corrigé.
+Firebase peut retourner une erreur technique spécifique.
 
-En cas de conflit, les décisions explicites du projet et `AGENTS.md` priment. Ce skill complète les skills d'architecture, de nomenclature et de design system ; il ne les remplace pas.
+Le service technique identifie cette erreur.
+
+Le repository ou la couche d'intégration la traduit vers une erreur compréhensible par le métier.
+
+Le Use Case ne doit pas connaître les codes internes de Firebase.
+
+Les erreurs métier utilisent le modèle d'erreur défini par le projet.
+
+Les messages et codes réutilisables doivent provenir du catalogue centralisé correspondant.
+
+Ne masque pas les erreurs inattendues.
+
+Préserve les informations techniques utiles au diagnostic, sans les exposer au client.
+
+## 10. Communication entre fonctionnalités
+
+Une fonctionnalité ne doit pas accéder directement aux implémentations internes d'une autre fonctionnalité.
+
+Les échanges doivent passer par des contrats ou mécanismes explicitement définis.
+
+Exemple :
+
+Une fonctionnalité Commande peut avoir besoin de consulter les informations d'un utilisateur.
+
+Elle ne doit pas importer directement le repository concret d'Auth.
+
+Elle doit utiliser une frontière d'accès appropriée.
+
+Ne crée pas de dépendances circulaires entre fonctionnalités.
+
+Ne partage pas automatiquement tous les modèles et services.
+
+Un élément doit être partagé uniquement lorsque plusieurs fonctionnalités ont réellement besoin de la même responsabilité.
+
+## 11. Évolution de Presentation
+
+La présentation doit rester indépendante des fournisseurs techniques.
+
+Les composants ne doivent pas importer Firebase ou Prisma pour exécuter directement des opérations métier.
+
+Les hooks peuvent orchestrer les interactions de présentation et appeler les mécanismes prévus pour déclencher les Use Cases.
+
+Un changement de fournisseur technique ne doit pas nécessiter de réécrire les écrans.
+
+Les composants génériques restent dans `packages/ui`.
+
+Les composants propres à une fonctionnalité restent dans cette fonctionnalité.
+
+## 12. Évolution de la base de données
+
+La persistance est une responsabilité technique.
+
+Prisma et PostgreSQL ne doivent pas devenir des dépendances des règles métier.
+
+Les modifications de schéma doivent être réalisées avec une compréhension des conséquences sur les données existantes.
+
+Règles :
+
+- Préserver la cohérence des données.
+- Éviter les changements incompatibles non maîtrisés.
+- Examiner les migrations nécessaires.
+- Ne pas supprimer des données pour résoudre une erreur sans autorisation.
+- Ne pas exposer les types Prisma dans les contrats métier.
+
+Ne construis pas une couche d'abstraction de base de données supplémentaire si les repositories et services existants répondent déjà au besoin.
+
+## 13. Évolution progressive
+
+Une évolution doit être limitée au périmètre nécessaire.
+
+Avant une modification importante :
+
+1. Comprendre l'architecture existante.
+2. Identifier les dépendances concernées.
+3. Identifier les consommateurs des contrats.
+4. Évaluer les risques de régression.
+5. Proposer une modification proportionnée.
+6. Vérifier le comportement après modification.
+
+Ne refonds pas plusieurs fonctionnalités pour résoudre un problème local.
+
+Ne profite pas d'une modification pour introduire des abstractions sans rapport avec le besoin.
+
+## 14. Anti-sur-ingénierie
+
+L'évolutivité ne justifie pas automatiquement :
+
+- Une Factory.
+- Une Strategy.
+- Un Adapter supplémentaire.
+- Un Manager.
+- Un registre de fournisseurs.
+- Un système de plugins.
+- Une couche générique universelle.
+- Plusieurs interfaces pour la même responsabilité.
+
+Introduis ces mécanismes uniquement lorsqu'un besoin réel les justifie.
+
+Avant de créer une abstraction, pose-toi trois questions :
+
+1. Quel problème concret résout-elle ?
+2. Quelle dépendance ou duplication élimine-t-elle ?
+3. Le code serait-il réellement plus simple sans elle ?
+
+Si elle ajoute plus de complexité qu'elle n'en retire, ne l'introduis pas.
+
+## 15. Vérification finale
+
+Avant de terminer une évolution, vérifier :
+
+- Domain ne dépend pas des fournisseurs techniques.
+- Les contrats sont indépendants des SDK.
+- Data implémente les contrats de Core.
+- Les dépendances sont injectées explicitement.
+- Awilix reste dans le Composition Root.
+- Les services encapsulent les intégrations techniques.
+- Les fonctionnalités ne dépendent pas directement des implémentations internes d'autres fonctionnalités.
+- Les erreurs techniques sont traduites correctement.
+- Les contrats partagés ne sont pas modifiés sans analyse d'impact.
+- Aucune abstraction hypothétique n'a été ajoutée.
+- Les changements restent limités au besoin réel.
+
+## Règle finale
+
+L'évolutivité de TopDeal repose sur des frontières claires et des dépendances maîtrisées.
+
+**Le métier doit pouvoir évoluer indépendamment des technologies, sans transformer le projet en architecture inutilement abstraite.**

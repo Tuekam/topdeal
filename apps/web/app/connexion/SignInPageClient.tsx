@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { SignInScreen } from "@topdeal/feature-auth/presentation";
-import type { SignInInput } from "@topdeal/feature-auth/domain";
+import type { SignInInput } from "@topdeal/feature-auth/core";
 import {
   resolveCompleteEmailVerificationUseCase,
   resolveCompleteAuthProfileFromWebUseCase,

@@ -1,4 +1,4 @@
 import "server-only";
 
-export { FirebaseAdminIdentityProvider } from "./adapters/FirebaseAdminIdentityProvider";
-export { PrismaAuthUserRepository } from "./repositories/PrismaAuthUserRepository";
+export { FirebaseAdminIdentityProvider } from "./services/FirebaseAdminIdentityProvider";
+export { AuthUserRepositoryImpl } from "./repositories/AuthUserRepositoryImpl";

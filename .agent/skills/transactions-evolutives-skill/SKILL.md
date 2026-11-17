@@ -1,4 +1,3 @@
-
 ---
 name: transactions-evolutives
 description: >
@@ -14,15 +13,11 @@ description: >
 
 ## 1. Objectif impératif
 
-TopDeal traite actuellement les transactions manuellement. Cette situation décrit le
-**mode opératoire actuel**, pas une règle d'architecture permanente.
+TopDeal traite actuellement les transactions manuellement. Cette situation décrit le **mode opératoire actuel**, pas une règle d'architecture permanente.
 
-Le code doit permettre de commencer avec un traitement manuel, puis d'intégrer plus tard
-un ou plusieurs agrégateurs de paiement ou les API d'opérateurs, sans réécrire les
-règles métier ni casser les fonctionnalités existantes.
+Le code doit permettre de commencer avec un traitement manuel, puis d'intégrer plus tard un ou plusieurs agrégateurs de paiement ou les API d'opérateurs, sans réécrire les règles métier ni casser les fonctionnalités existantes.
 
-**Principe central : le métier décrit une transaction et son cycle de vie ; un mécanisme
-de traitement interchangeable exécute ou accompagne l'opération.**
+**Principe central : le métier décrit une transaction et son cycle de vie ; un mécanisme de traitement interchangeable exécute ou accompagne l'opération.**
 
 Ne jamais confondre :
 - le processus métier d'une transaction ;
@@ -45,8 +40,8 @@ Ne jamais confondre :
 
 ## 3. Architecture de référence
 
-Respecter l'architecture TopDeal existante : monorepo pnpm, features séparées en
-`domain`, `data`, `presentation`, `apps/web` pour l'assemblage et les points d'entrée.
+Respecter l'architecture TopDeal existante : monorepo pnpm, features séparées en `domain`, `data`, `presentation`, `apps/web` pour l'assemblage et les points d'entrée.
+
 Ne pas créer de `src`.
 
 ### 3.1 Domaine
@@ -67,15 +62,13 @@ Les entités et Use Cases ne doivent pas importer :
 - Next.js ou Awilix ;
 - format de webhook propre à un fournisseur.
 
-Le domaine ne doit pas contenir des champs techniques imposés par un prestataire
-(ex. nom d'une classe SDK, code d'erreur brut ou objet de réponse propriétaire).
-Ces informations peuvent être conservées dans la couche Data comme métadonnées
-techniques lorsque cela est nécessaire à l'exploitation ou au rapprochement.
+Le domaine ne doit pas contenir des champs techniques imposés par un prestataire (ex. nom d'une classe SDK, code d'erreur brut ou objet de réponse propriétaire).
+
+Ces informations peuvent être conservées dans la couche Data comme métadonnées techniques lorsque cela est nécessaire à l'exploitation ou au rapprochement.
 
 ### 3.2 Ports appartenant à TopDeal
 
-Définir les ports selon les capacités réellement nécessaires aux Use Cases, et non
-selon l'API d'un fournisseur choisi.
+Définir les ports selon les capacités réellement nécessaires aux Use Cases, et non selon l'API d'un fournisseur choisi.
 
 Exemples de capacités possibles, à retenir uniquement si le besoin produit existe :
 - initier une opération ;
@@ -85,8 +78,7 @@ Exemples de capacités possibles, à retenir uniquement si le besoin produit exi
 - recevoir et traiter une notification fournisseur ;
 - rapprocher une opération avec les données du fournisseur.
 
-Un port exprime une intention stable de TopDeal. Il ne doit pas recopier à l'identique
-les noms, paramètres ou structures d'un SDK externe.
+Un port exprime une intention stable de TopDeal. Il ne doit pas recopier à l'identique les noms, paramètres ou structures d'un SDK externe.
 
 ### 3.3 Couche Data : adaptateurs
 
@@ -99,53 +91,51 @@ La couche Data contient les implémentations concrètes :
 - vérification technique des notifications entrantes ;
 - stockage des références externes et des métadonnées techniques.
 
-Chaque fournisseur possède son propre adaptateur. Éviter un adaptateur géant rempli
-de conditions `if provider === ...`.
+Chaque fournisseur possède son propre adaptateur.
+
+Éviter un adaptateur géant rempli de conditions `if provider === ...`.
 
 ### 3.4 Composition Root
 
 `apps/web` configure les dépendances avec Awilix dans le conteneur DI.
-Le choix de l'adaptateur actif se fait à cet endroit ou dans une configuration dédiée,
-pas dans le domaine ni dans les composants React.
 
-Le mode manuel doit rester sélectionnable. L'ajout d'un fournisseur doit principalement
-consister à :
+Le choix de l'adaptateur actif se fait à cet endroit ou dans une configuration dédiée, pas dans le domaine ni dans les composants React.
+
+Le mode manuel doit rester sélectionnable.
+
+L'ajout d'un fournisseur doit principalement consister à :
 1. créer son adaptateur ;
 2. le tester ;
 3. l'enregistrer dans le conteneur DI ;
 4. configurer les secrets et paramètres nécessaires ;
 5. activer son usage selon une décision explicite.
 
-Ne pas construire un système complexe de routage multi-fournisseurs tant qu'un besoin
-réel ne le justifie pas.
+Ne pas construire un système complexe de routage multi-fournisseurs tant qu'un besoin réel ne le justifie pas.
 
 ## 4. Distinguer transaction métier et tentative de traitement
 
-Ne pas représenter toute l'histoire d'une transaction par un simple booléen
-`isPaid`, `isSuccess` ou `isManual`.
+Ne pas représenter toute l'histoire d'une transaction par un simple booléen `isPaid`, `isSuccess` ou `isManual`.
 
 Une transaction métier peut nécessiter une ou plusieurs tentatives de traitement.
+
 Cette distinction aide à gérer les délais, les erreurs et les changements de fournisseur.
 
 Modèle conceptuel indicatif :
-- **Transaction** : opération métier TopDeal, avec une référence interne stable et un
-  état métier.
-- **PaymentAttempt / TransactionAttempt** : tentative d'exécution auprès d'un canal
-  ou fournisseur, avec son propre état et ses références techniques.
+
+- **Transaction** : opération métier TopDeal, avec une référence interne stable et un état métier.
+- **PaymentAttempt / TransactionAttempt** : tentative d'exécution auprès d'un canal ou fournisseur, avec son propre état et ses références techniques.
 - **ProviderReference** : référence fournie par un prestataire, si applicable.
-- **TransactionEvent** : événement métier ou technique utile à l'historique et à
-  l'audit, si le besoin le justifie.
+- **TransactionEvent** : événement métier ou technique utile à l'historique et à l'audit, si le besoin le justifie.
 
-Ces noms sont des propositions conceptuelles, pas une obligation de créer toutes ces
-classes ou tables dès la première version. Ne pas ajouter d'entités sans besoin réel.
+Ces noms sont des propositions conceptuelles, pas une obligation de créer toutes ces classes ou tables dès la première version.
 
-Une opération manuelle peut être représentée par une tentative dont le mode est manuel,
-sans faire de la transaction elle-même un objet exclusivement manuel.
+Ne pas ajouter d'entités sans besoin réel.
+
+Une opération manuelle peut être représentée par une tentative dont le mode est manuel, sans faire de la transaction elle-même un objet exclusivement manuel.
 
 ## 5. Cycle de vie et statuts
 
-Les statuts doivent exprimer des états métier compréhensibles par TopDeal et rester
-indépendants des libellés fournisseurs.
+Les statuts doivent exprimer des états métier compréhensibles par TopDeal et rester indépendants des libellés fournisseurs.
 
 Exemples conceptuels à adapter aux règles validées :
 - en attente ;
@@ -159,8 +149,7 @@ Exemples conceptuels à adapter aux règles validées :
 - remboursée ;
 - remboursement échoué.
 
-Ne pas adopter automatiquement cette liste : les statuts exacts, transitions permises,
-règles de finalité et rôles autorisés doivent être définis par le produit.
+Ne pas adopter automatiquement cette liste : les statuts exacts, transitions permises, règles de finalité et rôles autorisés doivent être définis par le produit.
 
 Règles :
 - centraliser les transitions dans le domaine ou les Use Cases appropriés ;
@@ -170,14 +159,13 @@ Règles :
 - conserver une trace des changements significatifs ;
 - ne pas assimiler « demande envoyée » à « paiement confirmé ».
 
-Un fournisseur peut employer ses propres statuts. L'adaptateur les traduit vers les
-états internes. Conserver éventuellement le statut brut à des fins de diagnostic,
-sans l'exposer comme statut métier principal.
+Un fournisseur peut employer ses propres statuts. L'adaptateur les traduit vers les états internes.
+
+Conserver éventuellement le statut brut à des fins de diagnostic, sans l'exposer comme statut métier principal.
 
 ## 6. Parcours manuel aujourd'hui
 
-Le parcours manuel doit utiliser les mêmes concepts métier et le même cycle de vie
-général que le futur parcours automatique.
+Le parcours manuel doit utiliser les mêmes concepts métier et le même cycle de vie général que le futur parcours automatique.
 
 L'adaptateur manuel peut prendre en charge, selon le processus validé :
 - l'enregistrement d'une déclaration ou d'une demande ;
@@ -186,11 +174,11 @@ L'adaptateur manuel peut prendre en charge, selon le processus validé :
 - l'ajout d'une référence ou d'une preuve, si le produit l'autorise ;
 - l'historique de traitement.
 
-Ne pas inventer les modalités de preuve, les personnes autorisées, les délais ou les
-conditions de confirmation. Ces éléments relèvent des exigences métier et de sécurité.
+Ne pas inventer les modalités de preuve, les personnes autorisées, les délais ou les conditions de confirmation.
 
-Le traitement manuel ne doit pas contourner les Use Cases ni modifier directement
-la base de données depuis l'interface d'administration.
+Ces éléments relèvent des exigences métier et de sécurité.
+
+Le traitement manuel ne doit pas contourner les Use Cases ni modifier directement la base de données depuis l'interface d'administration.
 
 ## 7. Préparer les intégrations automatiques
 
@@ -207,33 +195,31 @@ Lorsqu'un agrégateur ou une API opérateur sera choisi :
 9. Activer progressivement l'intégration avec une configuration contrôlée.
 10. Conserver un moyen opérationnel de traiter les cas en attente ou en erreur.
 
-Ne pas supposer qu'un fournisseur propose les mêmes opérations qu'un autre. Par exemple,
-l'initiation, la consultation d'état, le remboursement, les notifications et le
-rapprochement peuvent avoir des disponibilités différentes.
+Ne pas supposer qu'un fournisseur propose les mêmes opérations qu'un autre.
+
+Par exemple, l'initiation, la consultation d'état, le remboursement, les notifications et le rapprochement peuvent avoir des disponibilités différentes.
 
 ## 8. Fiabilité : doublons, délais et erreurs
 
-Les systèmes de paiement sont distribués : une requête peut être traitée par le
-fournisseur alors que TopDeal ne reçoit pas sa réponse à temps. Une nouvelle tentative
-aveugle peut créer une opération en double.
+Les systèmes de paiement sont distribués : une requête peut être traitée par le fournisseur alors que TopDeal ne reçoit pas sa réponse à temps.
+
+Une nouvelle tentative aveugle peut créer une opération en double.
 
 Appliquer les règles suivantes :
 - attribuer une référence interne unique à chaque opération ;
 - utiliser une clé d'idempotence lorsque le fournisseur la prend en charge ;
-- définir une stratégie d'idempotence côté TopDeal même si le fournisseur n'en propose
-  pas ;
+- définir une stratégie d'idempotence côté TopDeal même si le fournisseur n'en propose pas ;
 - rendre le traitement des notifications répétées sans effet financier supplémentaire ;
 - enregistrer les identifiants d'événements externes lorsqu'ils existent ;
-- ne pas relancer automatiquement une opération financière sans connaître le risque
-  de doublon ;
+- ne pas relancer automatiquement une opération financière sans connaître le risque de doublon ;
 - distinguer erreur définitive, erreur temporaire et résultat inconnu ;
 - prévoir une consultation d'état ou un rapprochement pour les résultats inconnus ;
 - gérer les délais d'attente sans conclure automatiquement à un échec ;
 - empêcher qu'une même notification soit appliquée plusieurs fois.
 
-Les mécanismes exacts (table d'idempotence, contraintes uniques, file de messages,
-verrouillage, tâches planifiées) doivent rester proportionnés au volume et aux garanties
-du fournisseur. Ne pas ajouter une infrastructure distribuée sans nécessité.
+Les mécanismes exacts (table d'idempotence, contraintes uniques, file de messages, verrouillage, tâches planifiées) doivent rester proportionnés au volume et aux garanties du fournisseur.
+
+Ne pas ajouter une infrastructure distribuée sans nécessité.
 
 ## 9. Sécurité et contrôle
 
@@ -246,39 +232,35 @@ Pour toute opération financière :
 - vérifier l'authenticité des webhooks selon la documentation du fournisseur ;
 - protéger les webhooks contre le rejeu lorsque le mécanisme le permet ;
 - limiter et journaliser les actions administratives sensibles ;
-- ne pas stocker les données de carte ou autres données sensibles de paiement sans
-  nécessité et cadre approprié ;
+- ne pas stocker les données de carte ou autres données sensibles de paiement sans nécessité et cadre approprié ;
 - ne jamais journaliser les secrets, jetons ou données personnelles non nécessaires.
 
-La validation d'un paiement doit reposer sur une source serveur fiable : confirmation
-vérifiée du fournisseur ou validation manuelle autorisée, selon le mode actif.
+La validation d'un paiement doit reposer sur une source serveur fiable : confirmation vérifiée du fournisseur ou validation manuelle autorisée, selon le mode actif.
 
-Consulter également le skill `topdeal-securite` pour les règles de sécurité générales.
+Consulter également le skill `securite` pour les règles de sécurité générales.
 
 ## 10. Persistance et migrations
 
-Le schéma PostgreSQL/Prisma doit représenter les concepts métier et les tentatives de
-traitement sans dépendre du schéma interne d'un prestataire.
+Le schéma PostgreSQL/Prisma doit représenter les concepts métier et les tentatives de traitement sans dépendre du schéma interne d'un prestataire.
 
 Bonnes pratiques :
 - utiliser l'identifiant interne TopDeal comme référence principale ;
 - conserver séparément les identifiants externes ;
-- prévoir une relation entre transaction et tentative si plusieurs tentatives sont
-  nécessaires ;
+- prévoir une relation entre transaction et tentative si plusieurs tentatives sont nécessaires ;
 - ajouter des contraintes d'unicité adaptées aux références internes et externes ;
 - stocker les montants avec un type décimal adapté, jamais en flottant binaire ;
-- stocker explicitement la devise lorsque le produit prend en charge plusieurs devises
-  ou lorsque cela est requis pour lever toute ambiguïté ;
+- stocker explicitement la devise lorsque le produit prend en charge plusieurs devises ou lorsque cela est requis pour lever toute ambiguïté ;
 - définir les dates et fuseaux de manière cohérente ;
 - conserver un historique suffisant pour l'audit et le support ;
 - éviter les colonnes spécifiques à chaque fournisseur dans la table métier principale.
 
 Les champs JSON de métadonnées ne doivent pas devenir un moyen de cacher tout le modèle.
-Les données nécessaires aux recherches, contraintes et rapprochements doivent être
-structurées.
 
-Toute migration doit préserver les transactions existantes. Ne jamais réinterpréter
-silencieusement les anciennes opérations manuelles ni perdre leur historique.
+Les données nécessaires aux recherches, contraintes et rapprochements doivent être structurées.
+
+Toute migration doit préserver les transactions existantes.
+
+Ne jamais réinterpréter silencieusement les anciennes opérations manuelles ni perdre leur historique.
 
 ## 11. API et interface
 
@@ -290,10 +272,10 @@ L'interface :
 - ne contient aucun SDK de paiement secret ou privilégié ;
 - ne dépend pas du nom d'un fournisseur pour afficher le cycle de vie ;
 - présente les instructions du parcours manuel lorsque ce mode est actif ;
-- peut présenter un parcours automatique lorsqu'il sera activé, sans modifier les
-  règles métier communes.
+- peut présenter un parcours automatique lorsqu'il sera activé, sans modifier les règles métier communes.
 
 Ne pas afficher de faux statut de réussite pendant l'attente d'une confirmation.
+
 Prévoir des états de chargement, d'attente, d'erreur et de résultat inconnu.
 
 ## 12. Tests obligatoires
@@ -329,8 +311,9 @@ Pour tout changement touchant aux transactions, envisager au minimum :
 - les autres features ne dépendent pas d'un fournisseur ;
 - changer la configuration du fournisseur ne change pas les règles métier.
 
-Utiliser des environnements de test/sandbox lorsque le fournisseur en propose. Ne jamais
-effectuer de transaction réelle pour un test automatisé.
+Utiliser des environnements de test/sandbox lorsque le fournisseur en propose.
+
+Ne jamais effectuer de transaction réelle pour un test automatisé.
 
 ## 13. Anti-patterns interdits
 
@@ -355,8 +338,7 @@ Avant de modifier le code :
 2. Lire les règles métier déjà validées et les modèles existants.
 3. Identifier ce qui est confirmé, ce qui est une hypothèse et ce qui reste à décider.
 4. Vérifier les ports, adaptateurs et Use Cases déjà présents avant d'en créer.
-5. Déterminer si le changement concerne le métier, le traitement manuel, un fournisseur,
-   la persistance ou l'interface.
+5. Déterminer si le changement concerne le métier, le traitement manuel, un fournisseur, la persistance ou l'interface.
 6. Proposer la modification la plus petite qui respecte l'architecture.
 
 Pendant le travail :
@@ -389,5 +371,4 @@ Les points suivants nécessitent une décision produit ou technique explicite :
 - devise(s) prises en charge ;
 - choix d'un fournisseur principal ou de plusieurs fournisseurs.
 
-Tant que ces décisions ne sont pas prises, construire une architecture neutre et minimale,
-sans inventer le comportement métier.
+Tant que ces décisions ne sont pas prises, construire une architecture neutre et minimale, sans inventer le comportement métier.

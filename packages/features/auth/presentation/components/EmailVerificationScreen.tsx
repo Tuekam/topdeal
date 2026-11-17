@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button, Card } from "@topdeal/ui";
 import type { ReactNode } from "react";
 type AuthStatusResult = { status: string };
-import type { SendEmailVerificationResult } from "../../domain/use-cases/SendEmailVerificationUseCase";
+import type { SendEmailVerificationResult } from "../../core";
 
 type EmailVerificationScreenProps = {
   onSendVerification: () => Promise<SendEmailVerificationResult>;
