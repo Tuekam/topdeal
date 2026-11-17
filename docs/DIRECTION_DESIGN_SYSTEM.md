@@ -41,6 +41,7 @@ Valeurs documentées dans la référence Design System, à utiliser comme base t
 |---|---|
 | Page | `#FAF9F7` |
 | Surface | `#FFFFFF` |
+| Surface adoucie (note Auth) | `#F8F6F3` |
 | Tuile d’image | `#F1EDE8` |
 | Bordure | `#E7E3DD` |
 | Bordure de champ | `#D9D3CB` |
@@ -48,6 +49,7 @@ Valeurs documentées dans la référence Design System, à utiliser comme base t
 | Texte secondaire | `#6B6159` |
 | Accent d’action | `#B8531A` |
 | Erreur de champ | `#A33D35` |
+| Fond d’erreur (alerte Auth) | `#FAEFED` |
 | En-tête | 76 px |
 | Champ standard | 46 px |
 | Bouton standard | 44 px |
@@ -74,7 +76,7 @@ La revue initiale confirme une identité commune entre l’accueil, la publicati
 
 ## Variations à résoudre avant de généraliser
 
-Le propriétaire a validé `#A33D35` comme couleur d’erreur des champs. Cela ne valide pas toute la palette d’états : les couleurs vertes et ambre restent à confirmer avant généralisation.
+Le propriétaire a validé `#A33D35` comme couleur d’erreur des champs. La maquette Auth ajoute une surface adoucie `#F8F6F3` pour son avis de sécurité et un fond d’erreur `#FAEFED` pour son alerte. Cela ne valide pas toute la palette d’états : les couleurs vertes et ambre restent à confirmer avant généralisation.
 
 Les maquettes ne sont pas entièrement normalisées entre elles :
 

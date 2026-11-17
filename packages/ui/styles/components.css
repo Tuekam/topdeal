@@ -26,7 +26,8 @@
 }
 
 .td-button:focus-visible,
-.td-input:focus-visible {
+.td-input:focus-visible,
+.td-input-end-action:focus-visible {
   outline: 2px solid var(--td-color-text);
   outline-offset: 2px;
 }
@@ -58,6 +59,37 @@
   color: var(--td-color-text);
   font: inherit;
   font-size: var(--td-font-size-body);
+}
+
+.td-input--with-end-action {
+  padding-right: 92px;
+}
+
+.td-input-control {
+  position: relative;
+}
+
+.td-input-end-action {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  right: 4px;
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  padding-inline: 8px;
+  border: 0;
+  border-radius: var(--td-radius-label);
+  background: transparent;
+  color: var(--td-color-text-secondary);
+  font: inherit;
+  font-size: var(--td-font-size-supporting);
+  font-weight: var(--td-font-weight-medium);
+  cursor: pointer;
+}
+
+.td-input-end-action:hover {
+  background-color: var(--td-color-image-tile);
 }
 
 .td-input[aria-invalid="true"] {

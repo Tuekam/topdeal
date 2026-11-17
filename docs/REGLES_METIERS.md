@@ -39,7 +39,7 @@ Ce document formalise les règles métier de TopDeal. Il traduit les décisions 
 * **RG-001 — Compte unique `[VALIDÉ]`** : Un utilisateur possède un compte unique lui permettant d’agir comme acheteur et comme vendeur.
 * **RG-002 — Âge minimal `[VALIDÉ]`** : Seules les personnes âgées de 18 ans ou plus peuvent créer et utiliser un compte TopDeal.
 * **RG-003 — Téléphone unique `[VALIDÉ]`** : Le numéro de téléphone doit être unique pour chaque compte.
-* **RG-004 — Adresse e-mail `[VALIDÉ]`** : L’unicité de l’adresse e-mail dépend du mode d’inscription et reste à confirmer.
+* **RG-004 — Adresse e-mail `[VALIDÉ]`** : Une adresse e-mail vérifiée ne peut appartenir qu’à un seul compte TopDeal, toutes méthodes d’authentification confondues. L’égalité d’adresse ne suffit pas à lier des identités : l’utilisateur doit s’authentifier au compte existant puis confirmer explicitement la liaison.
 * **RG-005 — Profil minimal `[VALIDÉ]`** : Le profil comprend au minimum le prénom, le nom et le numéro de téléphone.
 * **RG-006 — Date de naissance `[VALIDÉ]`** : La date de naissance est demandée afin de contrôler l’âge minimal.
 * **RG-007 — Suspension `[VALIDÉ]`** : L’administration peut suspendre ou réactiver un compte selon ses habilitations.
@@ -51,6 +51,8 @@ Ce document formalise les règles métier de TopDeal. Il traduit les décisions 
 * **RG-013 — Motif de refus `[VALIDÉ]`** : Toute demande refusée comporte un motif communiqué au demandeur.
 * **RG-014 — Accès aux justificatifs `[VALIDÉ]`** : Les pièces d’identité sont privées et accessibles uniquement aux administrateurs habilités.
 * **RG-015 — Badge bleu `[VALIDÉ]`** : Le badge bleu est associé à une vérification d’identité acceptée.
+* **RG-164 — Vérification de l’adresse e-mail `[VALIDÉ]`** : L’adresse e-mail doit être vérifiée avant tout accès au compte. Le statut doit être contrôlé côté serveur à partir d’une source d’authentification fiable.
+* **RG-165 — Profil après inscription Google `[VALIDÉ]`** : Un nouvel utilisateur Google doit compléter les champs obligatoires de son profil, dont le numéro de téléphone et la date de naissance, avant tout accès au compte. Les règles d’âge minimal et d’unicité du téléphone s’appliquent.
 
 ---
 

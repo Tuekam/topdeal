@@ -1,6 +1,7 @@
-import { useId, type InputHTMLAttributes } from "react";
+import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
+  endAction?: ReactNode;
   error?: string;
   hint?: string;
   label: string;
@@ -11,6 +12,7 @@ export function Input({
   "aria-describedby": providedDescribedBy,
   "aria-invalid": providedInvalid,
   className,
+  endAction,
   error,
   fieldClassName,
   hint,
@@ -30,19 +32,29 @@ export function Input({
     .filter(Boolean)
     .join(" ");
   const inputClassName = ["td-input", className].filter(Boolean).join(" ");
+  const input = (
+    <input
+      {...inputProps}
+      aria-describedby={describedBy || undefined}
+      aria-invalid={error ? true : providedInvalid}
+      className={inputClassName}
+      id={inputId}
+    />
+  );
 
   return (
     <div className={["td-input-field", fieldClassName].filter(Boolean).join(" ")}>
       <label className="td-input-label" htmlFor={inputId}>
         {label}
       </label>
-      <input
-        {...inputProps}
-        aria-describedby={describedBy || undefined}
-        aria-invalid={error ? true : providedInvalid}
-        className={inputClassName}
-        id={inputId}
-      />
+      {endAction ? (
+        <div className="td-input-control">
+          {input}
+          {endAction}
+        </div>
+      ) : (
+        input
+      )}
       {hint && (
         <p className="td-input-hint" id={hintId}>
           {hint}

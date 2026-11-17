@@ -1,0 +1,26 @@
+{
+  "name": "@topdeal/feature-auth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./domain": "./domain/index.ts",
+    "./data": "./data/index.ts",
+    "./data/client": "./data/client.ts",
+    "./presentation": "./presentation/index.ts"
+  },
+  "dependencies": {
+    "@topdeal/database": "workspace:*",
+    "@topdeal/ui": "workspace:*",
+    "firebase": "^13.3.0",
+    "firebase-admin": "^14.5.1",
+    "server-only": "^0.0.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0"
+  }
+}

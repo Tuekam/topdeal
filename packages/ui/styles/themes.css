@@ -1,6 +1,7 @@
 :root {
   --td-color-page: #FAF9F7;
   --td-color-surface: #FFFFFF;
+  --td-color-surface-muted: #F8F6F3;
   --td-color-image-tile: #F1EDE8;
   --td-color-border: #E7E3DD;
   --td-color-input-border: #D9D3CB;
@@ -8,6 +9,7 @@
   --td-color-text-secondary: #6B6159;
   --td-color-accent: #B8531A;
   --td-color-error: #A33D35;
+  --td-color-error-background: #FAEFED;
 
   --td-font-sans: var(--font-schibsted-grotesk), Arial, Helvetica, sans-serif;
   --td-font-weight-regular: 400;
@@ -32,6 +34,7 @@
   --td-radius-search: 12px;
   --td-radius-button: 10px;
   --td-radius-label: 6px;
+  --td-radius-notice: 8px;
   --td-radius-full: 50%;
   --td-shadow-none: none;
 }
@@ -39,6 +42,7 @@
 @theme inline {
   --color-page: var(--td-color-page);
   --color-surface: var(--td-color-surface);
+  --color-surface-muted: var(--td-color-surface-muted);
   --color-image-tile: var(--td-color-image-tile);
   --color-border: var(--td-color-border);
   --color-input-border: var(--td-color-input-border);
@@ -46,6 +50,7 @@
   --color-text-secondary: var(--td-color-text-secondary);
   --color-accent: var(--td-color-accent);
   --color-error: var(--td-color-error);
+  --color-error-background: var(--td-color-error-background);
   --font-sans: var(--td-font-sans);
   --font-weight-regular: var(--td-font-weight-regular);
   --font-weight-medium: var(--td-font-weight-medium);
@@ -67,4 +72,5 @@
   --radius-search: var(--td-radius-search);
   --radius-button: var(--td-radius-button);
   --radius-label: var(--td-radius-label);
+  --radius-notice: var(--td-radius-notice);
 }

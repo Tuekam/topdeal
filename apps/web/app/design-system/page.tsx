@@ -3,6 +3,7 @@ import { Button, Card, colors, Input } from "@topdeal/ui";
 const colorTokens = [
   ["Page", colors.page],
   ["Surface", colors.surface],
+  ["Surface adoucie", colors.surfaceMuted],
   ["Tuile d’image", colors.imageTile],
   ["Bordure", colors.border],
   ["Bordure de champ", colors.inputBorder],
@@ -10,6 +11,7 @@ const colorTokens = [
   ["Texte secondaire", colors.textSecondary],
   ["Accent", colors.accent],
   ["Erreur de champ", colors.error],
+  ["Fond d’erreur", colors.errorBackground],
 ] as const;
 
 export default function DesignSystemPage() {

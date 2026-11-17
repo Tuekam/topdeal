@@ -1,6 +1,5 @@
 packages:
   - "apps/*"
-  - "packages/core"
   - "packages/database"
   - "packages/ui"
   - "packages/features/*"

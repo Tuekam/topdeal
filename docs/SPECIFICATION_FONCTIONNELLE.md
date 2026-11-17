@@ -117,13 +117,16 @@ La demande de vérification d'identité et l'attribution manuelle du badge bleu 
 | **Opérateurs Mobile Money** | Réseaux MTN Mobile Money et Orange Money. Les comptes de la plateforme utilisés pour recevoir les paiements et effectuer les transferts leur sont dédiés. |
 
 ### 3.1 Création de compte et profil
-* Les modes envisagés sont l'inscription par téléphone et mot de passe ou par Google.
+* Les méthodes retenues sont Google en priorité, puis e-mail et mot de passe. L'authentification par téléphone et mot de passe n'est pas retenue.
 * Le profil contient au minimum le prénom, le nom et le numéro de téléphone.
 * Le numéro de téléphone est unique par compte.
-* L'unicité de l'adresse e-mail dépend du mode d'inscription et reste à confirmer.
+* Une adresse e-mail vérifiée ne peut appartenir qu'à un seul compte TopDeal, toutes méthodes d'authentification confondues.
+* Une identité Google ne peut être liée à un compte existant qu'après authentification à ce compte et confirmation explicite de la liaison ; une adresse e-mail identique ne suffit pas.
+* L'adresse e-mail doit être vérifiée avant tout accès au compte. Son statut est contrôlé côté serveur auprès d'une source fiable.
 * Un compte permet à la même personne d'acheter et de vendre ; aucun compte vendeur distinct n'est requis.
 * L'âge minimum d'utilisation est fixé à 18 ans ; la date de naissance est demandée à l'inscription.
-* Firebase Authentication est envisagé comme solution d'authentification technique, sans que cela modifie les règles métier.
+* Un nouvel utilisateur Google doit compléter les champs obligatoires du profil avant tout accès au compte.
+* Firebase Authentication est la solution technique actuelle ; son SDK reste derrière une abstraction et ne modifie pas les règles métier.
 
 ### 3.2 Modification, récupération et suspension
 L'utilisateur peut modifier ses informations de profil. Les changements touchant aux coordonnées de connexion ou de versement doivent faire l'objet de contrôles adaptés. En cas de perte d'accès au téléphone ou à l'e-mail, l'utilisateur doit pouvoir solliciter le support. La récupération ne doit pas permettre une prise de contrôle du compte sur la seule base d'une information facilement accessible.

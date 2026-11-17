@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TopDeal
 
-## Getting Started
+TopDeal est une marketplace de proximité destinée à Bafoussam, au Cameroun. Le dépôt est un monorepo pnpm ; l’application Web utilise Next.js, React et TypeScript.
 
-First, run the development server:
+## Démarrer
+
+Installer les dépendances puis lancer l’application Web :
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L’application est disponible sur [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Commandes disponibles à la racine :
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm build
+pnpm lint
+```
 
-## Learn More
+Les variables d’environnement nécessaires doivent être configurées localement. Ne jamais versionner leur valeur.
 
-To learn more about Next.js, take a look at the following resources:
+## Organisation actuelle
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `apps/web` : routes Next.js, endpoints HTTP, configuration et Composition Root Awilix.
+- `packages/features/auth` : présentation Auth, règles et cas d’utilisation dans `domain`, intégrations dans `data`.
+- `packages/database` : schéma Prisma, migrations et client de base de données.
+- `packages/ui` : composants visuels, tokens et styles partagés.
+- `docs` : spécifications fonctionnelles, règles métier, base de données et direction visuelle.
+- `.agent/skills` : consignes spécialisées de conception et de développement du projet.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Les packages de fonctionnalité et les éléments transversaux sont ajoutés quand un besoin concret les justifie. Les règles d’architecture complètes figurent dans `AGENTS.md`.
 
-## Deploy on Vercel
+## État Auth
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Les pages `/connexion` et `/design-system/auth-profile` sont des aperçus de présentation. Le serveur possède une première tranche de création de session ; l’inscription et la complétion de profil ne sont pas encore des parcours fonctionnels.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Consulter `MEMOIRE1.md` pour l’état de travail, les décisions validées, les points en attente et la prochaine étape.
