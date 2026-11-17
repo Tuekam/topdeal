@@ -13,9 +13,16 @@ export class SearchAnnoncesRepositoryImpl implements SearchAnnoncesRepository {
   constructor(private readonly dependencies: Dependencies) {}
 
   async search(input: SearchAnnonceInput, pageSize: number): Promise<SearchAnnoncePage> {
+    const categoryFilter = input.categorieId
+      ? {
+          active: true,
+          OR: [{ id: input.categorieId }, { parent_id: input.categorieId }],
+        }
+      : { active: true };
+
     const where: Prisma.annonceWhereInput = {
       visibilite: "PUBLIEE",
-      categorie_annonce_categorie_idTocategorie: { active: true },
+      categorie_annonce_categorie_idTocategorie: categoryFilter,
     };
 
     if (input.query) {
@@ -35,18 +42,6 @@ export class SearchAnnoncesRepositoryImpl implements SearchAnnoncesRepository {
         ...(input.prixMax !== null ? { lte: new Prisma.Decimal(input.prixMax) } : {}),
       };
     }
-    if (input.categorieId) {
-      const categories = await this.dependencies.prisma.categorie.findMany({
-        where: {
-          active: true,
-          OR: [{ id: input.categorieId }, { parent_id: input.categorieId }],
-        },
-        select: { id: true },
-      });
-      if (categories.length === 0) return { items: [], nextCursor: null };
-      where.categorie_id = { in: categories.map((category) => category.id) };
-    }
-
     const annonces = await this.dependencies.prisma.annonce.findMany({
       where,
       orderBy: [{ date_publication: "desc" }, { id: "desc" }],

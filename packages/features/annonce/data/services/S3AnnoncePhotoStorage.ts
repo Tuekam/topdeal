@@ -12,12 +12,16 @@ import type { StoredAnnoncePhoto } from "../../core/models/StoredAnnoncePhoto";
 import type { AnnoncePhotoStorage } from "../../core/repositories/AnnoncePhotoStorage";
 
 const READ_URL_TTL_SECONDS = 300;
+const READ_URL_CACHE_TTL_MS = 270_000;
+const MAX_READ_URL_CACHE_ENTRIES = 4_096;
 const EXTENSIONS_BY_TYPE: Record<AnnoncePhotoInput["contentType"], string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
 let clientInstance: S3Client | null = null;
+const readUrlCache = new Map<string, { url: string; expiresAt: number }>();
+const pendingReadUrls = new Map<string, Promise<string>>();
 
 function requiredEnvironmentVariable(name: string): string {
   const value = process.env[name]?.trim();
@@ -43,6 +47,16 @@ function getClient(): S3Client {
     },
   });
   return clientInstance;
+}
+
+function keepReadUrl(key: string, url: string): void {
+  readUrlCache.delete(key);
+  readUrlCache.set(key, { url, expiresAt: Date.now() + READ_URL_CACHE_TTL_MS });
+  while (readUrlCache.size > MAX_READ_URL_CACHE_ENTRIES) {
+    const oldestKey = readUrlCache.keys().next().value;
+    if (oldestKey === undefined) return;
+    readUrlCache.delete(oldestKey);
+  }
 }
 
 function hasValidSignature(photo: AnnoncePhotoInput): boolean {
@@ -92,14 +106,32 @@ export class S3AnnoncePhotoStorage implements AnnoncePhotoStorage {
       throw new Error("Invalid announcement photo key.");
     }
 
-    return getSignedUrl(
+    const cached = readUrlCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      readUrlCache.delete(key);
+      readUrlCache.set(key, cached);
+      return cached.url;
+    }
+    readUrlCache.delete(key);
+
+    const pending = pendingReadUrls.get(key);
+    if (pending) return pending;
+
+    const request = getSignedUrl(
       getClient(),
       new GetObjectCommand({
         Bucket: getBucketName(),
         Key: key,
       }),
       { expiresIn: READ_URL_TTL_SECONDS },
-    );
+    ).then((url) => {
+      keepReadUrl(key, url);
+      return url;
+    }).finally(() => {
+      pendingReadUrls.delete(key);
+    });
+    pendingReadUrls.set(key, request);
+    return request;
   }
 
   async delete(key: string): Promise<void> {

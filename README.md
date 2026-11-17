@@ -22,6 +22,8 @@ pnpm lint
 
 Les variables d’environnement nécessaires doivent être configurées localement. Ne jamais versionner leur valeur.
 
+`DATABASE_POOL_MAX` règle le nombre maximal de connexions PostgreSQL par processus Web (10 par défaut, entre 1 et 50). En production, choisir sa valeur selon le nombre maximal d’instances Web et le budget de connexions de PostgreSQL ou de son pooler.
+
 ## Organisation actuelle
 
 - `apps/web` : routes Next.js, endpoints HTTP, configuration et Composition Root Awilix.

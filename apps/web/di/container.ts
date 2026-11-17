@@ -54,6 +54,17 @@ import type { AppCradle } from "./types";
 
 let containerInstance: AwilixContainer<AppCradle> | null = null;
 
+function getDatabasePoolMax(): number {
+  const configuredValue = process.env.DATABASE_POOL_MAX;
+  if (!configuredValue) return 10;
+
+  const maxConnections = Number(configuredValue);
+  if (!Number.isInteger(maxConnections) || maxConnections < 1 || maxConnections > 50) {
+    throw new Error("DATABASE_POOL_MAX must be an integer between 1 and 50.");
+  }
+  return maxConnections;
+}
+
 export function buildContainer(): AwilixContainer<AppCradle> {
   const connectionString = process.env.DATABASE_URL;
 
@@ -66,7 +77,9 @@ export function buildContainer(): AwilixContainer<AppCradle> {
   });
 
   container.register({
-    prisma: asValue(createDatabaseClient(connectionString)),
+    prisma: asValue(createDatabaseClient(connectionString, {
+      maxConnections: getDatabasePoolMax(),
+    })),
     annoncePhotoStorage: asClass(S3AnnoncePhotoStorage).singleton(),
     createAnnonceRepository: asClass(CreateAnnonceRepositoryImpl).singleton(),
     getPublicAnnonceRepository: asClass(GetPublicAnnonceRepositoryImpl).singleton(),

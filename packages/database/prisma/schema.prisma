@@ -1,11 +1,12 @@
 generator client {
   provider        = "prisma-client"
   output          = "../generated/prisma"
-  previewFeatures = ["partialIndexes"]
+  previewFeatures = ["partialIndexes", "postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
+  extensions = [pg_trgm]
 }
 
 model administrateur {
@@ -65,7 +66,11 @@ model annonce {
   @@index([categorie_id], map: "idx_annonce_categorie")
   @@index([categorie_souhaitee_id], map: "idx_annonce_categorie_souhaitee")
   @@index([visibilite, disponibilite], map: "idx_annonce_recherche")
-  @@index([utilisateur_id], map: "idx_annonce_utilisateur")
+  @@index([visibilite, date_publication(sort: Desc), id(sort: Desc)], map: "idx_annonce_publication_cursor")
+  @@index([utilisateur_id, date_publication(sort: Desc), id(sort: Desc)], map: "idx_annonce_proprietaire_cursor")
+  @@index([titre(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_annonce_titre_trgm")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_annonce_description_trgm")
+  @@index([quartier(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_annonce_quartier_trgm")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -355,7 +360,7 @@ model photo_annonce {
   annonce_id   String  @db.Uuid
   annonce      annonce @relation(fields: [annonce_id], references: [id], onUpdate: NoAction, map: "fk_photo_annonce")
 
-  @@index([annonce_id], map: "idx_photo_annonce")
+  @@index([annonce_id, ordre, id], map: "idx_photo_annonce_ordre")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
