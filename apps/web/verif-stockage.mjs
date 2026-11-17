@@ -2,7 +2,7 @@ import { S3Client, HeadBucketCommand, CreateBucketCommand } from "@aws-sdk/clien
 
 const s3 = new S3Client({
   endpoint: process.env.S3_ENDPOINT,
-  region: process.env.S3_REGION,
+  region: process.env.S3_REGION || "us-east-1",
   forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY,

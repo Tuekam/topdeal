@@ -16,5 +16,6 @@ export type { CompleteAuthProfileInput, CompleteAuthProfileResult, CompleteAuthP
 export type { CompleteEmailVerificationUseCase } from "./usecases/CompleteEmailVerificationUseCase";
 export type { CompleteGoogleRegistrationResult, CompleteGoogleRegistrationUseCase } from "./usecases/CompleteGoogleRegistrationUseCase";
 export type { CreateWebSessionInput, CreateWebSessionResult, CreateWebSessionUseCase } from "./usecases/CreateWebSessionUseCase";
+export type { VerifyWebSessionResult, VerifyWebSessionUseCase } from "./usecases/VerifyWebSessionUseCase";
 export type { SendEmailVerificationResult, SendEmailVerificationUseCase } from "./usecases/SendEmailVerificationUseCase";
 export type { SignInInput, SignInResult, SignInUseCase } from "./usecases/SignInUseCase";

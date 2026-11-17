@@ -1,6 +1,9 @@
 export { Button } from "./components/button/Button";
+export { BackButton } from "./components/button/BackButton";
 export { Card } from "./components/card/Card";
 export { Input } from "./components/input/Input";
+export { Select } from "./components/select/Select";
+export { Switch } from "./components/switch/Switch";
 export { colors } from "./tokens/colors";
 export { radius } from "./tokens/radius";
 export { shadows } from "./tokens/shadows";

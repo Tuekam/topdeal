@@ -6,5 +6,6 @@ export { CompleteAuthProfileUseCaseImpl } from "./usecases/CompleteAuthProfileUs
 export { CompleteEmailVerificationUseCaseImpl } from "./usecases/CompleteEmailVerificationUseCaseImpl";
 export { CompleteGoogleRegistrationUseCaseImpl } from "./usecases/CompleteGoogleRegistrationUseCaseImpl";
 export { CreateWebSessionUseCaseImpl } from "./usecases/CreateWebSessionUseCaseImpl";
+export { VerifyWebSessionUseCaseImpl } from "./usecases/VerifyWebSessionUseCaseImpl";
 export { SendEmailVerificationUseCaseImpl } from "./usecases/SendEmailVerificationUseCaseImpl";
 export { SignInUseCaseImpl } from "./usecases/SignInUseCaseImpl";

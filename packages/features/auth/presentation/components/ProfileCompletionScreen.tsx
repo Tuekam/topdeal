@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, Input } from "@topdeal/ui";
+import { BackButton, Button, Card, Input } from "@topdeal/ui";
 
 type ProfileDetails = {
   givenName: string;
@@ -82,9 +82,9 @@ export function ProfileCompletionScreen({ onSubmit, onCancel }: ProfileCompletio
               {isSubmitting ? "Enregistrement…" : "Terminer"}
             </Button>
             {onCancel && (
-              <Button className="w-full" disabled={isSubmitting} onClick={onCancel} variant="secondary">
+              <BackButton className="w-full" disabled={isSubmitting} onClick={onCancel}>
                 Retour à la connexion
-              </Button>
+              </BackButton>
             )}
           </form>
         </Card>

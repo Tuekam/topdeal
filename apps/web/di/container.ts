@@ -7,6 +7,34 @@ import {
 } from "awilix";
 import { createDatabaseClient } from "@topdeal/database";
 import {
+  CreateAnnonceRepositoryImpl,
+  GetActiveAnnonceCategoriesRepositoryImpl,
+  GetPublicAnnonceRepositoryImpl,
+  SearchAnnoncesRepositoryImpl,
+  UpdateAnnonceRepositoryImpl,
+  ChangeAnnonceVisibilityRepositoryImpl,
+  GetOwnedAnnoncesRepositoryImpl,
+  S3AnnoncePhotoStorage,
+} from "@topdeal/feature-annonce/data";
+import {
+  CreateAnnonceUseCaseImpl,
+  GetPublicAnnonceUseCaseImpl,
+  GetActiveAnnonceCategoriesUseCaseImpl,
+  SearchAnnoncesUseCaseImpl,
+  UpdateAnnonceUseCaseImpl,
+  ChangeAnnonceVisibilityUseCaseImpl,
+  GetOwnedAnnoncesUseCaseImpl,
+} from "@topdeal/feature-annonce/domain";
+import type {
+  CreateAnnonceUseCase,
+  GetPublicAnnonceUseCase,
+  GetActiveAnnonceCategoriesUseCase,
+  SearchAnnoncesUseCase,
+  UpdateAnnonceUseCase,
+  ChangeAnnonceVisibilityUseCase,
+  GetOwnedAnnoncesUseCase,
+} from "@topdeal/feature-annonce/core";
+import {
   FirebaseAdminIdentityProvider,
   AuthUserRepositoryImpl,
 } from "@topdeal/feature-auth/data";
@@ -14,40 +42,58 @@ import {
   CheckAuthRegistrationEligibilityUseCaseImpl,
   CompleteAuthProfileUseCaseImpl,
   CreateWebSessionUseCaseImpl,
+  VerifyWebSessionUseCaseImpl,
 } from "@topdeal/feature-auth/domain";
 import type {
   CheckAuthRegistrationEligibilityUseCase,
   CompleteAuthProfileUseCase,
   CreateWebSessionUseCase,
+  VerifyWebSessionUseCase,
 } from "@topdeal/feature-auth/core";
-import type { AuthCradle } from "./types";
+import type { AppCradle } from "./types";
 
-let containerInstance: AwilixContainer<AuthCradle> | null = null;
+let containerInstance: AwilixContainer<AppCradle> | null = null;
 
-export function buildContainer(): AwilixContainer<AuthCradle> {
+export function buildContainer(): AwilixContainer<AppCradle> {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is required for the Auth feature.");
   }
 
-  const container = createContainer<AuthCradle>({
+  const container = createContainer<AppCradle>({
     injectionMode: InjectionMode.PROXY,
   });
 
   container.register({
     prisma: asValue(createDatabaseClient(connectionString)),
+    annoncePhotoStorage: asClass(S3AnnoncePhotoStorage).singleton(),
+    createAnnonceRepository: asClass(CreateAnnonceRepositoryImpl).singleton(),
+    getPublicAnnonceRepository: asClass(GetPublicAnnonceRepositoryImpl).singleton(),
+    createAnnonceUseCase: asClass(CreateAnnonceUseCaseImpl).singleton(),
+    getPublicAnnonceUseCase: asClass(GetPublicAnnonceUseCaseImpl).singleton(),
+    getActiveAnnonceCategoriesRepository: asClass(GetActiveAnnonceCategoriesRepositoryImpl).singleton(),
+    getActiveAnnonceCategoriesUseCase: asClass(GetActiveAnnonceCategoriesUseCaseImpl).singleton(),
+    searchAnnoncesRepository: asClass(SearchAnnoncesRepositoryImpl).singleton(),
+    searchAnnoncesUseCase: asClass(SearchAnnoncesUseCaseImpl).singleton(),
+    updateAnnonceRepository: asClass(UpdateAnnonceRepositoryImpl).singleton(),
+    updateAnnonceUseCase: asClass(UpdateAnnonceUseCaseImpl).singleton(),
+    changeAnnonceVisibilityRepository: asClass(ChangeAnnonceVisibilityRepositoryImpl).singleton(),
+    changeAnnonceVisibilityUseCase: asClass(ChangeAnnonceVisibilityUseCaseImpl).singleton(),
+    getOwnedAnnoncesRepository: asClass(GetOwnedAnnoncesRepositoryImpl).singleton(),
+    getOwnedAnnoncesUseCase: asClass(GetOwnedAnnoncesUseCaseImpl).singleton(),
     identityProvider: asClass(FirebaseAdminIdentityProvider).singleton(),
     userRepository: asClass(AuthUserRepositoryImpl).singleton(),
     createWebSessionUseCase: asClass(CreateWebSessionUseCaseImpl).singleton(),
     checkAuthRegistrationEligibilityUseCase: asClass(CheckAuthRegistrationEligibilityUseCaseImpl).singleton(),
     completeAuthProfileUseCase: asClass(CompleteAuthProfileUseCaseImpl).singleton(),
+    verifyWebSessionUseCase: asClass(VerifyWebSessionUseCaseImpl).singleton(),
   });
 
   return container;
 }
 
-export function getContainer(): AwilixContainer<AuthCradle> {
+export function getContainer(): AwilixContainer<AppCradle> {
   if (!containerInstance) {
     containerInstance = buildContainer();
   }
@@ -65,4 +111,36 @@ export function resolveCheckAuthRegistrationEligibilityUseCase(): CheckAuthRegis
 
 export function resolveCompleteAuthProfileUseCase(): CompleteAuthProfileUseCase {
   return getContainer().resolve("completeAuthProfileUseCase");
+}
+
+export function resolveVerifyWebSessionUseCase(): VerifyWebSessionUseCase {
+  return getContainer().resolve("verifyWebSessionUseCase");
+}
+
+export function resolveCreateAnnonceUseCase(): CreateAnnonceUseCase {
+  return getContainer().resolve("createAnnonceUseCase");
+}
+
+export function resolveGetPublicAnnonceUseCase(): GetPublicAnnonceUseCase {
+  return getContainer().resolve("getPublicAnnonceUseCase");
+}
+
+export function resolveGetActiveAnnonceCategoriesUseCase(): GetActiveAnnonceCategoriesUseCase {
+  return getContainer().resolve("getActiveAnnonceCategoriesUseCase");
+}
+
+export function resolveSearchAnnoncesUseCase(): SearchAnnoncesUseCase {
+  return getContainer().resolve("searchAnnoncesUseCase");
+}
+
+export function resolveUpdateAnnonceUseCase(): UpdateAnnonceUseCase {
+  return getContainer().resolve("updateAnnonceUseCase");
+}
+
+export function resolveChangeAnnonceVisibilityUseCase(): ChangeAnnonceVisibilityUseCase {
+  return getContainer().resolve("changeAnnonceVisibilityUseCase");
+}
+
+export function resolveGetOwnedAnnoncesUseCase(): GetOwnedAnnoncesUseCase {
+  return getContainer().resolve("getOwnedAnnoncesUseCase");
 }

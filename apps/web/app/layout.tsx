@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="fr"
       className={`${schibstedGrotesk.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className={`${schibstedGrotesk.className} min-h-full flex flex-col`}>
         {children}
       </body>
     </html>

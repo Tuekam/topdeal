@@ -1,12 +1,13 @@
 import { cookies } from "next/headers";
 import { AUTH_SESSION_MAX_AGE_MS } from "@topdeal/feature-auth/core";
 import type { CreateWebSessionResult } from "@topdeal/feature-auth/core";
+import { AUTH_SESSION_COOKIE_NAME } from "../../../../security/sessionCookie";
 
-const SESSION_COOKIE_NAME = "topdeal_session";
+export { AUTH_SESSION_COOKIE_NAME };
 
 export async function createAuthenticatedSessionResponse(sessionCookie: string): Promise<Response> {
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {
+  cookieStore.set(AUTH_SESSION_COOKIE_NAME, sessionCookie, {
     expires: new Date(Date.now() + AUTH_SESSION_MAX_AGE_MS),
     httpOnly: true,
     maxAge: AUTH_SESSION_MAX_AGE_MS / 1000,

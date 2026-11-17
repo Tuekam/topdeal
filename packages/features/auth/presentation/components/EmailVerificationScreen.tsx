@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Card } from "@topdeal/ui";
+import { BackButton, Button, Card } from "@topdeal/ui";
 import type { ReactNode } from "react";
 type AuthStatusResult = { status: string };
 import type { SendEmailVerificationResult } from "../../core";
@@ -99,7 +99,9 @@ export function EmailVerificationScreen({ onSendVerification, onContinue, title 
               {isSending ? "Envoi en cours…" : "Envoyer l’e-mail de vérification"}
             </Button>
           </div>
-          <p className="mt-5 text-center text-[13px] text-text-secondary"><a className="font-medium text-accent underline-offset-4 hover:underline" href="/connexion">Retour à la connexion</a></p>
+          <div className="mt-5 flex justify-center">
+            <BackButton className="text-[13px]" href="/connexion">Retour à la connexion</BackButton>
+          </div>
         </Card>
       </section>
     </main>

@@ -56,6 +56,7 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
         select: {
           utilisateur: {
             select: {
+              id: true,
               date_naissance: true,
               nom: true,
               prenom: true,
@@ -73,6 +74,7 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
     const user = identity.utilisateur;
 
     return {
+      userId: user.id,
       status: user.statut === "ACTIF" ? "active" : "suspended",
       profileComplete: isProfileComplete(user),
     };

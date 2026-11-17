@@ -2,6 +2,7 @@ import { useId, type InputHTMLAttributes, type ReactNode } from "react";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
   endAction?: ReactNode;
+  endAdornment?: ReactNode;
   error?: string;
   hint?: string;
   label: string;
@@ -13,6 +14,7 @@ export function Input({
   "aria-invalid": providedInvalid,
   className,
   endAction,
+  endAdornment,
   error,
   fieldClassName,
   hint,
@@ -31,7 +33,11 @@ export function Input({
   ]
     .filter(Boolean)
     .join(" ");
-  const inputClassName = ["td-input", className].filter(Boolean).join(" ");
+  const inputClassName = [
+    "td-input",
+    endAdornment ? "td-input--with-end-adornment" : undefined,
+    className,
+  ].filter(Boolean).join(" ");
   const input = (
     <input
       {...inputProps}
@@ -51,6 +57,13 @@ export function Input({
         <div className="td-input-control">
           {input}
           {endAction}
+        </div>
+      ) : endAdornment ? (
+        <div className="td-input-control">
+          {input}
+          <span aria-hidden="true" className="td-input-end-adornment">
+            {endAdornment}
+          </span>
         </div>
       ) : (
         input

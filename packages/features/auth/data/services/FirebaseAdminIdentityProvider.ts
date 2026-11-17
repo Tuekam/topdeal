@@ -10,6 +10,13 @@ const INVALID_TOKEN_ERROR_CODES = new Set([
   "auth/invalid-id-token",
   "auth/user-disabled",
 ]);
+const INVALID_SESSION_ERROR_CODES = new Set([
+  "auth/argument-error",
+  "auth/invalid-session-cookie",
+  "auth/session-cookie-expired",
+  "auth/session-cookie-revoked",
+  "auth/user-disabled",
+]);
 
 function getRequiredEnvironmentVariable(name: string): string {
   const value = process.env[name];
@@ -80,5 +87,28 @@ export class FirebaseAdminIdentityProvider implements AuthIdentityProvider {
     return getFirebaseAuth().createSessionCookie(identityToken, {
       expiresIn: expiresInMilliseconds,
     });
+  }
+
+  async verifySessionCookie(sessionCookie: string) {
+    try {
+      const decodedToken = await getFirebaseAuth().verifySessionCookie(
+        sessionCookie,
+        true,
+      );
+
+      return {
+        externalId: decodedToken.uid,
+        email: decodedToken.email ?? null,
+        emailVerified: decodedToken.email_verified === true,
+      };
+    } catch (error) {
+      const code = getErrorCode(error);
+
+      if (code && INVALID_SESSION_ERROR_CODES.has(code)) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 }

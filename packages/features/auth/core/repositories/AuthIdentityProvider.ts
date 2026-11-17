@@ -12,4 +12,5 @@ export interface AuthIdentityProvider {
     identityToken: string,
     expiresInMilliseconds: number,
   ): Promise<string>;
+  verifySessionCookie(sessionCookie: string): Promise<VerifiedAuthIdentity | null>;
 }

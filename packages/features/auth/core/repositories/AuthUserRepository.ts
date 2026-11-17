@@ -1,4 +1,5 @@
 export type AuthAccount = {
+  userId: string;
   status: "active" | "suspended";
   profileComplete: boolean;
 };

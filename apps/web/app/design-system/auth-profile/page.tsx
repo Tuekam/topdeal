@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ProfileCompletionScreen } from "@topdeal/feature-auth";
+import { BackButton } from "@topdeal/ui";
 
 export const metadata: Metadata = {
   title: "Aperçu du profil Auth",
@@ -14,12 +14,9 @@ export default function AuthProfilePreviewPage() {
           Aperçu uniquement : les informations saisies ne sont pas envoyées ni
           enregistrées.
         </p>
-        <Link
-          className="mt-2 inline-block text-supporting text-text-secondary underline"
-          href="/connexion"
-        >
+        <BackButton className="mt-2 text-supporting" href="/connexion">
           Retour à la connexion
-        </Link>
+        </BackButton>
       </div>
       <ProfileCompletionScreen />
     </>

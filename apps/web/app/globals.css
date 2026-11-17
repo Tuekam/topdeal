@@ -4,6 +4,7 @@
 /* Détection des classes du package UI */
 @source "../../../packages/ui";
 @source "../../../packages/features/auth";
+@source "../../../packages/features/annonce";
 
 /* Styles du Design System */
 @import "@topdeal/ui/styles/themes.css";

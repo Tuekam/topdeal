@@ -28,6 +28,7 @@ export function getAuthAppOrigin(): string {
 export function isAllowedAuthMutation(
   request: Request,
   expectedOrigin: string,
+  acceptedContentTypes: string[] = ["application/json"],
 ): boolean {
   const contentType = request.headers
     .get("content-type")
@@ -40,6 +41,6 @@ export function isAllowedAuthMutation(
     request.headers.get("origin") === expectedOrigin &&
     request.headers.get("sec-fetch-site") === "same-origin" &&
     request.headers.get("x-topdeal-request") === "1" &&
-    contentType === "application/json"
+    acceptedContentTypes.includes(contentType ?? "")
   );
 }
