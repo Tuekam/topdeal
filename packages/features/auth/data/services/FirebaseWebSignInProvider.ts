@@ -35,6 +35,15 @@ function getRequiredPublicEnvironmentVariable(name: string, value: string | unde
   return value;
 }
 
+function getEmailCredentialFailure(error: unknown): AuthSignInFailure | null {
+  const code = getSafeFirebaseErrorCode(error);
+  if (code === "auth/email-already-in-use" || code === "auth/credential-already-in-use") {
+    return new AuthSignInFailure("email_already_associated");
+  }
+  if (code === "auth/weak-password") return new AuthSignInFailure("weak_password");
+  return null;
+}
+
 function getFirebaseAuth(): Auth {
   if (authInstance) return authInstance;
 
@@ -74,11 +83,8 @@ export class FirebaseWebSignInProvider implements AuthSignInProvider {
     try {
       await createUserWithEmailAndPassword(getFirebaseAuth(), email.trim(), password);
     } catch (error) {
-      const code = getSafeFirebaseErrorCode(error);
-      if (code === "auth/email-already-in-use" || code === "auth/credential-already-in-use") {
-        throw new AuthSignInFailure("email_already_associated");
-      }
-      if (code === "auth/weak-password") throw new AuthSignInFailure("weak_password");
+      const failure = getEmailCredentialFailure(error);
+      if (failure) throw failure;
       throw error;
     }
   }
@@ -152,13 +158,11 @@ export class FirebaseWebSignInProvider implements AuthSignInProvider {
       linkedUser = linkedCredential.user;
     } catch (error) {
       const code = getSafeFirebaseErrorCode(error);
-      if (code === "auth/weak-password") {
-        throw new AuthSignInFailure("weak_password");
+      if (code !== "auth/provider-already-linked") {
+        const failure = getEmailCredentialFailure(error);
+        if (failure) throw failure;
+        throw error;
       }
-      if (code === "auth/email-already-in-use" || code === "auth/credential-already-in-use") {
-        throw new AuthSignInFailure("email_already_associated");
-      }
-      if (code !== "auth/provider-already-linked") throw error;
     }
 
     await linkedUser.getIdToken(true);

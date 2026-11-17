@@ -9,6 +9,22 @@ type Dependencies = {
   prisma: PrismaClient;
 };
 
+type StoredAuthProfile = {
+  prenom: string;
+  nom: string;
+  telephone: string | null;
+  date_naissance: Date | null;
+};
+
+function isProfileComplete(profile: StoredAuthProfile): boolean {
+  return Boolean(
+    profile.prenom.trim() &&
+    profile.nom.trim() &&
+    profile.telephone?.trim() &&
+    profile.date_naissance,
+  );
+}
+
 export class AuthUserRepositoryImpl implements AuthUserRepository {
   constructor(private readonly dependencies: Dependencies) {}
 
@@ -58,16 +74,13 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
 
     return {
       status: user.statut === "ACTIF" ? "active" : "suspended",
-      profileComplete:
-        user.prenom.trim().length > 0 &&
-        user.nom.trim().length > 0 &&
-        Boolean(user.telephone?.trim()) &&
-        user.date_naissance !== null,
+      profileComplete: isProfileComplete(user),
     };
   }
 
   async createProfileForExternalIdentity(profile: NewAuthProfile): Promise<"created" | "conflict"> {
     try {
+      // Le profil TopDeal et son identité Firebase doivent être créés ensemble ou pas du tout.
       const created = await this.dependencies.prisma.$transaction(async (transaction) => {
         const existingIdentity = await transaction.identite_externe.findUnique({
           where: {
@@ -92,11 +105,8 @@ export class AuthUserRepositoryImpl implements AuthUserRepository {
         });
         if (existingIdentity) {
           const user = existingIdentity.utilisateur;
-          const profileComplete = Boolean(
-            user.prenom.trim() && user.nom.trim() && user.telephone?.trim() && user.date_naissance,
-          );
           if (
-            user.statut !== "ACTIF" || profileComplete ||
+            user.statut !== "ACTIF" || isProfileComplete(user) ||
             (user.email !== null && user.email.toLowerCase() !== profile.email)
           ) return false;
 

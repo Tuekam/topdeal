@@ -52,6 +52,12 @@ export class CompleteAuthProfileUseCaseImpl implements CompleteAuthProfileUseCas
     if (!identity) return { status: "unauthenticated" };
     if (!identity.email || !identity.emailVerified) return { status: "email_unverified" };
 
+    // Vérifier la capacité de session Firebase avant d’écrire le profil en base.
+    const sessionCookie = await this.dependencies.identityProvider.createSessionCookie(
+      input.identityToken,
+      AUTH_SESSION_MAX_AGE_MS,
+    );
+
     const creationResult = await this.dependencies.userRepository.createProfileForExternalIdentity({
       externalId: identity.externalId,
       email: identity.email.trim().toLowerCase(),
@@ -63,10 +69,6 @@ export class CompleteAuthProfileUseCaseImpl implements CompleteAuthProfileUseCas
 
     if (creationResult !== "created") return { status: "profile_conflict" };
 
-    const sessionCookie = await this.dependencies.identityProvider.createSessionCookie(
-      input.identityToken,
-      AUTH_SESSION_MAX_AGE_MS,
-    );
     return { status: "authenticated", sessionCookie };
   }
 }
