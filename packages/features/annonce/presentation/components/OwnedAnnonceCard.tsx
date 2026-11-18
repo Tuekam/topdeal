@@ -8,10 +8,11 @@ import { AnnonceProductCard } from "./AnnonceProductCard";
 type OwnedAnnonceCardProps = {
   annonce: AnnonceOwnerItem;
   onEdit(annonceId: string): void;
+  onPrefetchEdit(annonceId: string): void;
   onChanged(): void;
 };
 
-export function OwnedAnnonceCard({ annonce, onEdit, onChanged }: OwnedAnnonceCardProps) {
+export function OwnedAnnonceCard({ annonce, onEdit, onPrefetchEdit, onChanged }: OwnedAnnonceCardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [visibility, setVisibility] = useState(annonce.visibilite);
   const showToast = useToast();
@@ -61,7 +62,13 @@ export function OwnedAnnonceCard({ annonce, onEdit, onChanged }: OwnedAnnonceCar
         status={visibilityLabel + " · " + availabilityLabel}
         imageActions={
           <>
-            <IconButton disabled={isSaving} label="Modifier l’annonce" onClick={() => onEdit(annonce.id)}>
+            <IconButton
+              disabled={isSaving}
+              label="Modifier l’annonce"
+              onClick={() => onEdit(annonce.id)}
+              onFocus={() => onPrefetchEdit(annonce.id)}
+              onPointerEnter={() => onPrefetchEdit(annonce.id)}
+            >
               <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
             </IconButton>
             {visibility !== "SUSPENDUE" && (

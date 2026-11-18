@@ -22,22 +22,22 @@ export class AnnonceAffiliateLinkRepositoryImpl implements AnnonceAffiliateLinkR
     const affiliationId = eligibleAnnonce?.affiliation?.id;
     if (!affiliationId) return null;
 
-    const existing = await this.dependencies.prisma.lien_affiliation.findFirst({
-      where: { affiliation_id: affiliationId, utilisateur_id: userId, actif: true },
-      select: { code_unique: true },
-    });
-    if (existing) return existing.code_unique;
-
-    const link = await this.dependencies.prisma.lien_affiliation.create({
-      data: {
+    await this.dependencies.prisma.lien_affiliation.createMany({
+      data: [{
         affiliation_id: affiliationId,
         utilisateur_id: userId,
         code_unique: randomUUID(),
         actif: true,
-      },
+      }],
+      // The partial unique index makes concurrent creates idempotent for active links.
+      skipDuplicates: true,
+    });
+
+    const link = await this.dependencies.prisma.lien_affiliation.findFirst({
+      where: { affiliation_id: affiliationId, utilisateur_id: userId, actif: true },
       select: { code_unique: true },
     });
-    return link.code_unique;
+    return link?.code_unique ?? null;
   }
 
   async findActivePrice(annonceId: string, code: string) {

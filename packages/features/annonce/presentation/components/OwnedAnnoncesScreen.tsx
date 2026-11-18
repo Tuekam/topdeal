@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnnonceCategory } from "../../core/models/AnnonceCategory";
 import type { AnnonceOwnerItem } from "../../core/models/AnnonceOwnerItem";
+import type { OwnedAnnonceEditDetails } from "../../core/models/OwnedAnnonceEditDetails";
 import type { OwnedAnnonceFilters } from "../../core/repositories/GetOwnedAnnoncesRepository";
 import { ANNONCE_SEARCH_QUERY_EVENT, type AnnonceSearchQueryEvent } from "../types/AnnonceSearchQueryEvent";
 import { AnnoncePagination } from "./AnnoncePagination";
@@ -51,12 +52,60 @@ export function OwnedAnnoncesScreen({
   const [visibleNextPageHref, setVisibleNextPageHref] = useState(nextPageHref);
   const [isFiltering, setIsFiltering] = useState(false);
   const [editingAnnonceId, setEditingAnnonceId] = useState<string | null>(null);
+  const [editingDetails, setEditingDetails] = useState<OwnedAnnonceEditDetails | null>(null);
+  const editDetailsCache = useRef(new Map<string, OwnedAnnonceEditDetails>());
+  const editDetailsRequests = useRef(new Map<string, Promise<OwnedAnnonceEditDetails | null>>());
+  const activeEditId = useRef<string | null>(null);
   const showToast = useToast();
 
   useEffect(() => () => {
     if (timer.current !== null) window.clearTimeout(timer.current);
     request.current?.abort();
   }, []);
+
+  function loadEditDetails(annonceId: string): Promise<OwnedAnnonceEditDetails | null> {
+    const cached = editDetailsCache.current.get(annonceId);
+    if (cached) return Promise.resolve(cached);
+
+    const pending = editDetailsRequests.current.get(annonceId);
+    if (pending) return pending;
+
+    const request = fetch(`/api/annonces/${annonceId}/modification`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const details = await response.json() as OwnedAnnonceEditDetails;
+        editDetailsCache.current.set(annonceId, details);
+        return details;
+      })
+      .catch(() => null)
+      .finally(() => editDetailsRequests.current.delete(annonceId));
+    editDetailsRequests.current.set(annonceId, request);
+    return request;
+  }
+
+  function prefetchEditDetails(annonceId: string) {
+    void loadEditDetails(annonceId);
+  }
+
+  async function openEdit(annonceId: string) {
+    activeEditId.current = annonceId;
+    setEditingAnnonceId(annonceId);
+    const details = await loadEditDetails(annonceId);
+    if (activeEditId.current !== annonceId) return;
+    if (!details) {
+      showToast({ kind: "error", title: "Annonce non chargée", description: "Impossible de charger les informations pour la modifier. Réessayez." });
+      activeEditId.current = null;
+      setEditingAnnonceId(null);
+      return;
+    }
+    setEditingDetails(details);
+  }
+
+  function closeEdit() {
+    activeEditId.current = null;
+    setEditingAnnonceId(null);
+    setEditingDetails(null);
+  }
 
   async function search(nextFilters: OwnedAnnonceFilters, delay = 100) {
     if (timer.current !== null) window.clearTimeout(timer.current);
@@ -128,15 +177,15 @@ export function OwnedAnnoncesScreen({
 
       <div aria-busy={isFiltering}>
         {visibleItems.length === 0 ? (
-          <p className="rounded-card border border-border bg-surface p-8 text-center text-text-secondary">
+          <p className="mt-7 rounded-card border border-border bg-surface p-8 text-center text-text-secondary">
             {displayFilters.query || displayFilters.categorieId || displayFilters.etat || displayFilters.visibilite || displayFilters.prixMin || displayFilters.prixMax || displayFilters.quartier || displayFilters.trocAccepte !== null
               ? "Aucune annonce ne correspond à ces critères."
               : "Vous n’avez pas encore publié d’annonce."}
           </p>
         ) : (
-          <section aria-label="Mes annonces" className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+          <section aria-label="Mes annonces" className="mt-7 grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
             {visibleItems.map((annonce) => (
-              <OwnedAnnonceCard annonce={annonce} key={annonce.id} onEdit={setEditingAnnonceId} onChanged={handleChanged} />
+              <OwnedAnnonceCard annonce={annonce} key={annonce.id} onEdit={(id) => void openEdit(id)} onPrefetchEdit={prefetchEditDetails} onChanged={handleChanged} />
             ))}
           </section>
         )}
@@ -145,14 +194,17 @@ export function OwnedAnnoncesScreen({
         </div>
         {isFiltering && <p className="pt-3 text-center text-xs text-text-secondary" role="status">Mise à jour des annonces…</p>}
       </div>
-      {editingAnnonceId && visibleItems.find((item) => item.id === editingAnnonceId) && (
+      {editingAnnonceId && editingDetails && (
         <EditOwnedAnnonceDialog
           annonceId={editingAnnonceId}
-          initialDetails={visibleItems.find((item) => item.id === editingAnnonceId)!.editDetails}
+          initialDetails={editingDetails}
           categories={categories}
           key={editingAnnonceId}
-          onClose={() => setEditingAnnonceId(null)}
-          onSaved={handleChanged}
+          onClose={closeEdit}
+          onSaved={() => {
+            editDetailsCache.current.delete(editingAnnonceId);
+            handleChanged();
+          }}
           open
         />
       )}

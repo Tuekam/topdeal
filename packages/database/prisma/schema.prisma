@@ -259,6 +259,7 @@ model lien_affiliation {
 
   @@index([affiliation_id], map: "idx_lien_affiliation_affiliation")
   @@index([utilisateur_id], map: "idx_lien_affiliation_utilisateur")
+  @@unique([affiliation_id, utilisateur_id], where: { actif: true }, map: "uq_lien_affiliation_active_user")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.

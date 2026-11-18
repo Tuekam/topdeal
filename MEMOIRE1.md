@@ -407,3 +407,24 @@ Etat initial avant accord : audit termine, sans modification UI. Voir la validat
 - Cause trouvée pour la largeur inchangée : Tailwind ne scannait pas packages/features/affiliation; ses classes de largeur et d’espacement n’étaient donc pas produites. Le package est maintenant inclus dans les sources CSS de Web, et la modale compacte définie précédemment sera appliquée.
 
 - Favoris : ajout d’un espacement supérieur mt-7 entre les contrôles de catégories/filtres et la grille des annonces (ainsi que l’état vide), aligné sur le catalogue.
+
+## Audit performance et isolation — première optimisation
+
+- La liste « Mes annonces » chargeait toutes les photos, la description et les données du formulaire d’édition pour chaque carte, puis signait toutes les URLs avant d’afficher la page. Une page de 20 annonces pouvait ainsi traiter jusqu’à 120 photos alors que les cartes n’en affichent qu’une.
+- Optimisation réalisée : la requête de liste ne sélectionne maintenant que les champs de carte et la première photo; le Use Case ne signe que ces vignettes. Les détails et URLs complets d’édition sont chargés via le GET dédié seulement au besoin. Le préchargement démarre au focus/survol du bouton Modifier; une requête en cours est mutualisée et le résultat est gardé en mémoire pour éviter un second appel à l’ouverture.
+- Isolation conservée : le GET d’édition vérifie la session, et le repository filtre simultanément par identifiant d’annonce et identifiant propriétaire issus de la session. Aucun identifiant utilisateur du client n’est accepté. Aucune migration ni donnée n’a été modifiée.
+- Vérifications exécutées : TypeScript Web, ESLint Web et git diff --check passent. Contrôle navigateur et test multi-comptes non exécutés.
+- À traiter ensuite : vérifier la concurrence sur la création des liens d’affiliation (le schéma n’a pas de contrainte composite empêchant plusieurs liens actifs pour la même annonce et le même apporteur); toute contrainte/migration nécessitera une validation explicite. Les plans de requêtes et tests de charge restent à mesurer avec un jeu représentatif, sans ajouter de données à la base locale actuelle.
+
+## Unicité des liens d’affiliation — migration appliquée en local
+
+- Autorisation explicite reçue pour appliquer la migration à la base locale `topdeal`.
+- Le statut Prisma indiquait que seule `20261118162000_unique_active_affiliate_link` était en attente. Le contrôle SQL pré-migration n’a trouvé aucun groupe en doublon actif.
+- Migration appliquée avec `prisma migrate deploy`; Prisma confirme ensuite que le schéma local est à jour. L’index partiel garantit un lien actif unique par couple affiliation/apporteur, tout en conservant les liens inactifs historiques.
+- Le repository insère avec `skipDuplicates`, puis relit le code actif gagnant afin que les créations concurrentes convergent vers le même lien.
+- Aucun test de concurrence ou contrôle navigateur n’a été exécuté. Les autres environnements doivent appliquer leurs migrations via `prisma migrate deploy` après leur propre contrôle pré-migration.
+
+## Espacement de « Mes annonces »
+
+- Ajout de la marge supérieure `mt-7` entre les contrôles/catégories et la grille, identique à la page Favoris; l’état vide garde le même espacement.
+- Modifications limitées à la présentation d’Annonce. `git diff --check` passe; rendu responsive à confirmer dans le navigateur.

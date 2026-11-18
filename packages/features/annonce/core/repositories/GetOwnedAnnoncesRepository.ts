@@ -13,9 +13,8 @@ export type OwnedAnnonceFilters = {
   visibilite: "PUBLIEE" | "MASQUEE" | "SUSPENDUE" | null;
 };
 
-export type OwnedAnnonceRecord = Omit<AnnonceOwnerItem, "photoUrl" | "editDetails"> & {
+export type OwnedAnnonceRecord = Omit<AnnonceOwnerItem, "photoUrl"> & {
   photoReference: string | null;
-  editDetails: Omit<AnnonceOwnerItem["editDetails"], "photos"> & { photos: Array<{ id: string; reference: string }> };
 };
 
 export type OwnedAnnoncePage = {

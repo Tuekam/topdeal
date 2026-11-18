@@ -210,6 +210,7 @@ export type lien_affiliationOrderByWithRelationInput = {
 export type lien_affiliationWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   code_unique?: string
+  affiliation_id_utilisateur_id?: Prisma.lien_affiliationAffiliation_idUtilisateur_idCompoundUniqueInput
   AND?: Prisma.lien_affiliationWhereInput | Prisma.lien_affiliationWhereInput[]
   OR?: Prisma.lien_affiliationWhereInput[]
   NOT?: Prisma.lien_affiliationWhereInput | Prisma.lien_affiliationWhereInput[]
@@ -220,7 +221,7 @@ export type lien_affiliationWhereUniqueInput = Prisma.AtLeast<{
   attribution_affiliation?: Prisma.Attribution_affiliationListRelationFilter
   affiliation?: Prisma.XOR<Prisma.AffiliationScalarRelationFilter, Prisma.affiliationWhereInput>
   utilisateur?: Prisma.XOR<Prisma.UtilisateurScalarRelationFilter, Prisma.utilisateurWhereInput>
-}, "id" | "code_unique">
+}, "id" | "code_unique" | "affiliation_id_utilisateur_id">
 
 export type lien_affiliationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -324,6 +325,11 @@ export type lien_affiliationOrderByRelationAggregateInput = {
 export type Lien_affiliationScalarRelationFilter = {
   is?: Prisma.lien_affiliationWhereInput
   isNot?: Prisma.lien_affiliationWhereInput
+}
+
+export type lien_affiliationAffiliation_idUtilisateur_idCompoundUniqueInput = {
+  affiliation_id: string
+  utilisateur_id: string
 }
 
 export type lien_affiliationCountOrderByAggregateInput = {

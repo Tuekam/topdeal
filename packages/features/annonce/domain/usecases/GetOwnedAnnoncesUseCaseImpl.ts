@@ -20,10 +20,6 @@ export class GetOwnedAnnoncesUseCaseImpl implements GetOwnedAnnoncesUseCase {
       PAGE_SIZE,
     );
     const items = await Promise.all(page.items.map(async (item) => {
-      const photos = await Promise.all(item.editDetails.photos.map(async (photo) => ({
-        id: photo.id,
-        url: await this.dependencies.annoncePhotoStorage.createReadUrl(photo.reference),
-      })));
       return {
         id: item.id,
         titre: item.titre,
@@ -35,8 +31,9 @@ export class GetOwnedAnnoncesUseCaseImpl implements GetOwnedAnnoncesUseCase {
         categorie: item.categorie,
         disponibilite: item.disponibilite,
         visibilite: item.visibilite,
-        photoUrl: photos[0]?.url ?? null,
-        editDetails: { ...item.editDetails, photos },
+        photoUrl: item.photoReference
+          ? await this.dependencies.annoncePhotoStorage.createReadUrl(item.photoReference)
+          : null,
       };
     }));
     return { items, nextCursor: page.nextCursor };

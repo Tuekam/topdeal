@@ -1,5 +1,3 @@
-import type { OwnedAnnonceEditDetails } from "./OwnedAnnonceEditDetails";
-
 export type AnnonceOwnerItem = {
   id: string;
   titre: string;
@@ -12,5 +10,4 @@ export type AnnonceOwnerItem = {
   disponibilite: "DISPONIBLE" | "INDISPONIBLE" | "EPUISEE";
   visibilite: "PUBLIEE" | "MASQUEE" | "SUSPENDUE";
   photoUrl: string | null;
-  editDetails: OwnedAnnonceEditDetails;
 };
