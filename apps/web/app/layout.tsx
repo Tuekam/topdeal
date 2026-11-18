@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Schibsted_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
+import { ThemeProvider, ToastViewport } from "@topdeal/ui";
 import "./globals.css";
 
 const schibstedGrotesk = Schibsted_Grotesk({
@@ -30,7 +31,10 @@ export default function RootLayout({
       className={`${schibstedGrotesk.variable} h-full antialiased`}
     >
       <body className={`${schibstedGrotesk.className} min-h-full flex flex-col`}>
-        {children}
+        <ThemeProvider>
+          {children}
+          <ToastViewport />
+        </ThemeProvider>
       </body>
     </html>
   );

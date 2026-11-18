@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import { AnnonceSearchScreen } from "@topdeal/feature-annonce/presentation";
 import {
   resolveGetActiveAnnonceCategoriesUseCase,
   resolveSearchAnnoncesUseCase,
 } from "../../di/container";
 import type { SearchAnnonceInput } from "@topdeal/feature-annonce/core";
+import { DEFAULT_ANNONCE_SORT, isAnnonceSort } from "@topdeal/feature-annonce/core";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -38,10 +40,11 @@ function createSearchParams(filters: SearchAnnonceInput): URLSearchParams {
   if (filters.prixMax) params.set("prixMax", filters.prixMax);
   if (filters.quartier) params.set("quartier", filters.quartier);
   if (filters.trocAccepte !== null) params.set("trocAccepte", String(filters.trocAccepte));
+  if (filters.sort !== DEFAULT_ANNONCE_SORT) params.set("sort", filters.sort);
   return params;
 }
 
-export default async function AnnoncesPage({ searchParams }: AnnoncePageProps) {
+async function AnnoncesPageContent({ searchParams }: AnnoncePageProps) {
   const params = await searchParams;
   const query = (getSingleValue(params, "q") ?? "").trim().slice(0, 200);
   const rawMinPrice = getPrice(getSingleValue(params, "prixMin"));
@@ -54,6 +57,7 @@ export default async function AnnoncesPage({ searchParams }: AnnoncePageProps) {
   const categoryParentValue = getSingleValue(params, "categorieParentId");
   const subcategoryValue = getSingleValue(params, "sousCategorieId");
   const cursorValue = getSingleValue(params, "cursor");
+  const sortValue = getSingleValue(params, "sort");
   const cursorHistory = getCursorHistory(params.cursorHistory);
   const quartierValue = getSingleValue(params, "quartier")?.trim() ?? "";
 
@@ -75,6 +79,7 @@ export default async function AnnoncesPage({ searchParams }: AnnoncePageProps) {
     prixMax: invalidPriceRange ? null : rawMaxPrice,
     quartier: quartierValue && quartierValue.length <= 150 ? quartierValue : null,
     trocAccepte: trocValue === "true" ? true : trocValue === "false" ? false : null,
+    sort: isAnnonceSort(sortValue) ? sortValue : DEFAULT_ANNONCE_SORT,
     cursor: cursorValue && UUID_PATTERN.test(cursorValue) ? cursorValue : null,
   };
 
@@ -97,8 +102,10 @@ export default async function AnnoncesPage({ searchParams }: AnnoncePageProps) {
     }
   }
 
+  const screenKey = currentPage + ":" + JSON.stringify(filters) + ":" + result.items.map((item) => item.id).join(",");
   return (
     <AnnonceSearchScreen
+      key={screenKey}
       categories={categories}
       filters={filters}
       items={result.items}
@@ -106,5 +113,21 @@ export default async function AnnoncesPage({ searchParams }: AnnoncePageProps) {
       previousPageHref={filters.cursor ? `/annonces${previousParams.size ? `?${previousParams.toString()}` : ""}` : null}
       nextPageHref={result.nextCursor ? `/annonces?${nextParams.toString()}` : null}
     />
+  );
+}
+
+function AnnoncesPageFallback() {
+  return (
+    <main aria-busy="true" className="mx-auto min-h-[60vh] w-full max-w-content px-4 py-10 text-sm text-text-secondary sm:px-6">
+      <p role="status">Chargement des annonces…</p>
+    </main>
+  );
+}
+
+export default function AnnoncesPage(props: AnnoncePageProps) {
+  return (
+    <Suspense fallback={<AnnoncesPageFallback />}>
+      <AnnoncesPageContent searchParams={props.searchParams} />
+    </Suspense>
   );
 }

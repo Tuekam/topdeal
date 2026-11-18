@@ -11,5 +11,7 @@ export type CreateAnnonceInput = {
   categorieId: string;
   categorieSouhaiteeId: string | null;
   souhaitEchangeDescription: string | null;
+  affiliationActive: boolean;
+  remunerationAffiliation: string;
   photos: AnnoncePhotoInput[];
 };

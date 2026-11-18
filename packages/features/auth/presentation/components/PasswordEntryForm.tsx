@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, Input } from "@topdeal/ui";
+import { Button, Card, Input, useToast } from "@topdeal/ui";
 
 type Props = {
   title: string;
@@ -16,18 +16,19 @@ type Props = {
 export function PasswordEntryForm({ title, description, inputLabel, submitLabel, submittingLabel, unexpectedErrorMessage, onSubmit }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const showToast = useToast();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting) return;
     const form = new FormData(event.currentTarget);
     setIsSubmitting(true);
-    setErrorMessage(null);
     try {
-      setErrorMessage(await onSubmit(String(form.get("password") ?? "")));
+      const message = await onSubmit(String(form.get("password") ?? ""));
+      if (message) showToast({ kind: "error", title: "Mot de passe non enregistré", description: message });
+      else showToast({ kind: "success", title: "Mot de passe enregistré" });
     } catch {
-      setErrorMessage(unexpectedErrorMessage);
+      showToast({ kind: "error", title: "Mot de passe non enregistré", description: unexpectedErrorMessage });
     } finally {
       setIsSubmitting(false);
     }
@@ -41,7 +42,6 @@ export function PasswordEntryForm({ title, description, inputLabel, submitLabel,
             <h1 className="text-[30px] leading-[1.2] font-semibold tracking-tight" id="password-entry-title">{title}</h1>
             <p className="mt-1 text-text-secondary">{description}</p>
           </header>
-          {errorMessage && <p className="mt-5 rounded-notice bg-error-background px-3 py-[11px] text-[13px] leading-[1.5] text-error" role="alert">{errorMessage}</p>}
           <form className="mt-6 space-y-5" onSubmit={submit}>
             <Input
               autoComplete="new-password"

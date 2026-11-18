@@ -44,7 +44,11 @@ export class SearchAnnoncesRepositoryImpl implements SearchAnnoncesRepository {
     }
     const annonces = await this.dependencies.prisma.annonce.findMany({
       where,
-      orderBy: [{ date_publication: "desc" }, { id: "desc" }],
+      orderBy: input.sort === "price-asc"
+        ? [{ prix: "asc" }, { id: "desc" }]
+        : input.sort === "price-desc"
+          ? [{ prix: "desc" }, { id: "desc" }]
+          : [{ date_publication: input.sort === "oldest" ? "asc" : "desc" }, { id: "desc" }],
       ...(input.cursor ? { cursor: { id: input.cursor }, skip: 1 } : {}),
       take: pageSize + 1,
       select: {

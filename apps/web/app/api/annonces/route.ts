@@ -3,13 +3,18 @@ import {
   resolveSearchAnnoncesUseCase,
 } from "../../../di/container";
 import type { CreateAnnonceInput } from "@topdeal/feature-annonce/core";
+import { DEFAULT_ANNONCE_SORT, isAnnonceSort } from "@topdeal/feature-annonce/core";
 import { getAuthAppOrigin, isAllowedAuthMutation } from "../../../security/authRequest";
-import { getVerifiedUserId } from "../../../security/verifiedSession";
+import { getVerifiedUserForApi } from "../../../security/verifiedSession";
 import { ANNONCE_API_ERROR_CODES as ERROR } from "./errorCodes";
 
 const MAX_REQUEST_SIZE_BYTES = 32 * 1024 * 1024;
+const MAX_PHOTO_COUNT = 6;
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRICE_PATTERN = /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/;
+const AFFILIATE_REWARD_PATTERN = /^[1-9]\d{0,9}$/;
 
 function invalidRequest(code: string, status: number): Response {
   return Response.json({ code }, {
@@ -36,6 +41,7 @@ export async function GET(request: Request): Promise<Response> {
   const trocValue = query.get("trocAccepte");
   const categorieId = query.get("categorieId");
   const cursor = query.get("cursor");
+  const sort = query.get("sort");
   const prixMin = query.get("prixMin");
   const prixMax = query.get("prixMax");
   const queryText = (query.get("q") ?? "").trim();
@@ -46,6 +52,7 @@ export async function GET(request: Request): Promise<Response> {
     (trocValue !== null && trocValue !== "true" && trocValue !== "false") ||
     (categorieId !== null && !UUID_PATTERN.test(categorieId)) ||
     (cursor !== null && !UUID_PATTERN.test(cursor)) ||
+    (sort !== null && !isAnnonceSort(sort)) ||
     (prixMin !== null && !PRICE_PATTERN.test(prixMin)) ||
     (prixMax !== null && !PRICE_PATTERN.test(prixMax)) ||
     (prixMin !== null && prixMax !== null && Number(prixMin) > Number(prixMax)) ||
@@ -63,6 +70,7 @@ export async function GET(request: Request): Promise<Response> {
     prixMax,
     quartier,
     trocAccepte: trocValue === null ? null : trocValue === "true",
+    sort: isAnnonceSort(sort) ? sort : DEFAULT_ANNONCE_SORT,
     cursor,
   });
 
@@ -84,8 +92,9 @@ export async function POST(request: Request): Promise<Response> {
     return invalidRequest(ERROR.REQUEST_TOO_LARGE, 413);
   }
 
-  const userId = await getVerifiedUserId();
-  if (!userId) return invalidRequest(ERROR.UNAUTHENTICATED, 401);
+  const verifiedUser = await getVerifiedUserForApi();
+  if (verifiedUser.status !== "authenticated") return verifiedUser.response;
+  const { userId } = verifiedUser;
 
   let form: FormData;
   try {
@@ -105,15 +114,29 @@ export async function POST(request: Request): Promise<Response> {
   const souhaitEchangeDescription =
     getRequiredText(form, "souhaitEchangeDescription") || null;
   const trocAccepte = getRequiredText(form, "trocAccepte") === "true";
+  const affiliationValue = getRequiredText(form, "affiliationActive");
+  const affiliationActive = affiliationValue === "true";
+  const remunerationAffiliation = getRequiredText(form, "remunerationAffiliation") ?? "0";
   const photoEntries = form.getAll("photos");
 
   if (
     titre === null || description === null ||
     (etat !== "NEUF" && etat !== "OCCASION") || prix === null ||
     quartier === null || categorieId === null ||
+    (affiliationValue !== null && affiliationValue !== "true" && affiliationValue !== "false") ||
+    (affiliationActive && !AFFILIATE_REWARD_PATTERN.test(remunerationAffiliation)) ||
     !Number.isSafeInteger(quantite) ||
     photoEntries.some((entry) => !(entry instanceof File))
   ) {
+    return invalidRequest(ERROR.INVALID_REQUEST_BODY, 400);
+  }
+  if (photoEntries.length < 1 || photoEntries.length > MAX_PHOTO_COUNT) {
+    return invalidRequest(ERROR.INVALID_REQUEST_BODY, 400);
+  }
+  const photoFiles = photoEntries as File[];
+  if (photoFiles.some((file) =>
+    !ALLOWED_PHOTO_TYPES.has(file.type) || file.size <= 0 || file.size > MAX_PHOTO_SIZE_BYTES,
+  )) {
     return invalidRequest(ERROR.INVALID_REQUEST_BODY, 400);
   }
   if (
@@ -126,8 +149,7 @@ export async function POST(request: Request): Promise<Response> {
   let photos: CreateAnnonceInput["photos"];
   try {
     photos = await Promise.all(
-      photoEntries.map(async (entry) => {
-        const file = entry as File;
+      photoFiles.map(async (file) => {
         return {
           originalName: sanitizeOriginalName(file.name),
           contentType: file.type as "image/jpeg" | "image/png" | "image/webp",
@@ -150,6 +172,8 @@ export async function POST(request: Request): Promise<Response> {
     categorieSouhaiteeId,
     souhaitEchangeDescription,
     trocAccepte,
+    affiliationActive,
+    remunerationAffiliation,
     photos,
   };
 

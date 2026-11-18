@@ -1,4 +1,9 @@
-:root {
+/*
+ * Components and feature styles consume semantic roles. Each palette changes
+ * the same tokens so one user choice stays consistent throughout the platform.
+ */
+:root,
+[data-theme="orange"] {
   --td-color-page: #FAF9F7;
   --td-color-surface: #FFFFFF;
   --td-color-surface-muted: #F8F6F3;
@@ -8,8 +13,15 @@
   --td-color-text: #2B221D;
   --td-color-text-secondary: #6B6159;
   --td-color-accent: #B8531A;
+  --td-color-on-accent: #FFFFFF;
+  --td-color-focus: var(--td-color-accent);
+  --td-color-overlay: rgb(24 18 14 / 45%);
   --td-color-error: #A33D35;
   --td-color-error-background: #FAEFED;
+  --td-color-success: #28734B;
+  --td-color-success-background: #EAF5EE;
+  --td-color-warning: #8A5A12;
+  --td-color-warning-background: #FFF5DF;
 
   --td-font-sans: var(--font-schibsted-grotesk), Arial, Helvetica, sans-serif;
   --td-font-weight-regular: 400;
@@ -37,6 +49,51 @@
   --td-radius-notice: 8px;
   --td-radius-full: 50%;
   --td-shadow-none: none;
+  --td-shadow-toast: 0 8px 24px rgb(43 34 29 / 16%);
+}
+
+[data-theme="blue"] {
+  --td-color-page: #F7F9FD;
+  --td-color-surface-muted: #F1F5FB;
+  --td-color-image-tile: #E9EFF8;
+  --td-color-border: #DFE6F1;
+  --td-color-input-border: #CCD6E5;
+  --td-color-accent: #2457C5;
+  --td-color-on-accent: #FFFFFF;
+  --td-color-focus: #2457C5;
+}
+
+[data-theme="yellow"] {
+  --td-color-page: #FCFAF3;
+  --td-color-surface-muted: #F8F4E8;
+  --td-color-image-tile: #F2ECD9;
+  --td-color-border: #E9E1CA;
+  --td-color-input-border: #D8CCAA;
+  --td-color-accent: #E0A800;
+  --td-color-on-accent: #2B221D;
+  --td-color-focus: #855E00;
+}
+
+[data-theme="red"] {
+  --td-color-page: #FDF8F8;
+  --td-color-surface-muted: #FAF0F0;
+  --td-color-image-tile: #F2E5E5;
+  --td-color-border: #EADADA;
+  --td-color-input-border: #DCCACA;
+  --td-color-accent: #B42332;
+  --td-color-on-accent: #FFFFFF;
+  --td-color-focus: #B42332;
+}
+
+[data-theme="green"] {
+  --td-color-page: #F7FAF8;
+  --td-color-surface-muted: #EEF6F1;
+  --td-color-image-tile: #E4F0E8;
+  --td-color-border: #DCE9E0;
+  --td-color-input-border: #C9DACF;
+  --td-color-accent: #1F754F;
+  --td-color-on-accent: #FFFFFF;
+  --td-color-focus: #1F754F;
 }
 
 @theme inline {
@@ -49,8 +106,15 @@
   --color-text: var(--td-color-text);
   --color-text-secondary: var(--td-color-text-secondary);
   --color-accent: var(--td-color-accent);
+  --color-on-accent: var(--td-color-on-accent);
+  --color-focus: var(--td-color-focus);
+  --color-overlay: var(--td-color-overlay);
   --color-error: var(--td-color-error);
   --color-error-background: var(--td-color-error-background);
+  --color-success: var(--td-color-success);
+  --color-success-background: var(--td-color-success-background);
+  --color-warning: var(--td-color-warning);
+  --color-warning-background: var(--td-color-warning-background);
   --font-sans: var(--td-font-sans);
   --font-weight-regular: var(--td-font-weight-regular);
   --font-weight-medium: var(--td-font-weight-medium);

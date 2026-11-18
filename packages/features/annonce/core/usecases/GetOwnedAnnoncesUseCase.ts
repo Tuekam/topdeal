@@ -1,4 +1,5 @@
 import type { AnnonceOwnerItem } from "../models/AnnonceOwnerItem";
+import type { OwnedAnnonceFilters } from "../repositories/GetOwnedAnnoncesRepository";
 
 export type GetOwnedAnnoncesResult = {
   items: AnnonceOwnerItem[];
@@ -6,5 +7,5 @@ export type GetOwnedAnnoncesResult = {
 };
 
 export interface GetOwnedAnnoncesUseCase {
-  execute(userId: string, cursor: string | null): Promise<GetOwnedAnnoncesResult>;
+  execute(userId: string, filters: OwnedAnnonceFilters, cursor: string | null): Promise<GetOwnedAnnoncesResult>;
 }

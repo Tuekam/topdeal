@@ -6,22 +6,26 @@ import type { AuthRegistrationResult } from "../../core";
 
 type Props = {
   isSubmitting: boolean;
-  errorMessage: string | null;
   onRegister: (input: { method: "email_password"; email: string; password: string }) => Promise<AuthRegistrationResult>;
   onGoogle: () => Promise<AuthRegistrationResult>;
 };
 
-export function SignUpCredentialsScreen({ isSubmitting, errorMessage, onRegister, onGoogle }: Props) {
+export function SignUpCredentialsScreen({ isSubmitting, onRegister, onGoogle }: Props) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSubmitting) return;
     const form = new FormData(event.currentTarget);
     await onRegister({
       method: "email_password",
       email: String(form.get("email") ?? ""),
       password: String(form.get("password") ?? ""),
     });
+  }
+
+  async function registerWithGoogle() {
+    if (isSubmitting) return;
+    await onGoogle();
   }
 
   return (
@@ -33,9 +37,7 @@ export function SignUpCredentialsScreen({ isSubmitting, errorMessage, onRegister
             <p className="mt-1 text-text-secondary">Créez votre compte TopDeal pour acheter et vendre.</p>
           </header>
 
-          {errorMessage && <p className="mt-5 rounded-notice bg-error-background px-3 py-[11px] text-[13px] leading-[1.5] text-error" role="alert">{errorMessage}</p>}
-
-          <Button className="mt-6 w-full" disabled={isSubmitting} onClick={() => void onGoogle()} variant="secondary">
+          <Button className="mt-6 w-full" disabled={isSubmitting} onClick={() => void registerWithGoogle()} variant="secondary">
             {isSubmitting ? "Inscription en cours…" : "Continuer avec Google"}
           </Button>
 

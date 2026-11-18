@@ -6,6 +6,7 @@ type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
   error?: string;
   hint?: string;
   label: string;
+  labelClassName?: string;
   fieldClassName?: string;
 };
 
@@ -20,6 +21,7 @@ export function Input({
   hint,
   id,
   label,
+  labelClassName,
   ...inputProps
 }: InputProps) {
   const generatedId = useId();
@@ -50,7 +52,7 @@ export function Input({
 
   return (
     <div className={["td-input-field", fieldClassName].filter(Boolean).join(" ")}>
-      <label className="td-input-label" htmlFor={inputId}>
+      <label className={["td-input-label", labelClassName].filter(Boolean).join(" ")} htmlFor={inputId}>
         {label}
       </label>
       {endAction ? (

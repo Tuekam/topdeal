@@ -5,6 +5,7 @@ type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & {
   error?: string;
   hint?: string;
   label: string;
+  labelClassName?: string;
   fieldClassName?: string;
 };
 
@@ -18,6 +19,7 @@ export function Select({
   hint,
   id,
   label,
+  labelClassName,
   ...selectProps
 }: SelectProps) {
   const generatedId = useId();
@@ -34,7 +36,7 @@ export function Select({
 
   return (
     <div className={["td-input-field", fieldClassName].filter(Boolean).join(" ")}>
-      <label className="td-input-label" htmlFor={selectId}>{label}</label>
+      <label className={["td-input-label", labelClassName].filter(Boolean).join(" ")} htmlFor={selectId}>{label}</label>
       <select
         {...selectProps}
         aria-describedby={describedBy || undefined}

@@ -1,0 +1,24 @@
+{
+  "name": "@topdeal/feature-affiliation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./core": "./core/index.ts",
+    "./data": "./data/index.ts",
+    "./domain": "./domain/index.ts",
+    "./presentation": "./presentation/index.ts"
+  },
+  "dependencies": {
+    "@topdeal/database": "workspace:*",
+    "@topdeal/ui": "workspace:*",
+    "server-only": "^0.0.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0"
+  }
+}

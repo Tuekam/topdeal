@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { BackButton, Button, Card, Input } from "@topdeal/ui";
+import { BackButton, Button, Card, Input, useToast } from "@topdeal/ui";
 
 type ProfileDetails = {
   givenName: string;
@@ -39,14 +39,17 @@ function getMessage(status: string): string | null {
 
 export function ProfileCompletionScreen({ onSubmit, onCancel }: ProfileCompletionScreenProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const showToast = useToast();
+  function cancel() {
+    if (!onCancel || isSubmitting) return;
+    onCancel();
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!onSubmit || isSubmitting) return;
     const form = new FormData(event.currentTarget);
     setIsSubmitting(true);
-    setErrorMessage(null);
     try {
       const result = await onSubmit({
         givenName: String(form.get("givenName") ?? ""),
@@ -54,9 +57,11 @@ export function ProfileCompletionScreen({ onSubmit, onCancel }: ProfileCompletio
         telephone: String(form.get("telephone") ?? ""),
         birthDate: String(form.get("birthDate") ?? ""),
       });
-      setErrorMessage(getMessage(result.status));
+      const message = getMessage(result.status);
+      if (result.status === "authenticated") showToast({ kind: "success", title: "Profil créé", description: "Votre compte TopDeal est prêt." });
+      else if (message) showToast({ kind: "error", title: "Profil non enregistré", description: message });
     } catch {
-      setErrorMessage("La création du profil n’a pas abouti. Réessayez.");
+      showToast({ kind: "error", title: "Profil non enregistré", description: "La création du profil n’a pas abouti. Réessayez." });
     } finally {
       setIsSubmitting(false);
     }
@@ -71,8 +76,6 @@ export function ProfileCompletionScreen({ onSubmit, onCancel }: ProfileCompletio
             <p className="mt-1 text-text-secondary">Quelques informations sont nécessaires pour finaliser votre compte.</p>
           </header>
 
-          {errorMessage && <p className="mt-5 rounded-notice bg-error-background px-3 py-[11px] text-[13px] leading-[1.5] text-error" role="alert">{errorMessage}</p>}
-
           <form className="mt-6 space-y-5" onSubmit={submit}>
             <Input autoComplete="given-name" label="Prénom" name="givenName" required />
             <Input autoComplete="family-name" label="Nom" name="familyName" required />
@@ -82,7 +85,7 @@ export function ProfileCompletionScreen({ onSubmit, onCancel }: ProfileCompletio
               {isSubmitting ? "Enregistrement…" : "Terminer"}
             </Button>
             {onCancel && (
-              <BackButton className="w-full" disabled={isSubmitting} onClick={onCancel}>
+              <BackButton className="w-full" disabled={isSubmitting} onClick={cancel}>
                 Retour à la connexion
               </BackButton>
             )}

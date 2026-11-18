@@ -6,6 +6,7 @@ import type {
   BeginAuthRegistrationInput,
   SendEmailVerificationResult,
 } from "../../core";
+import { useToast } from "@topdeal/ui";
 import { SetRegistrationPasswordScreen } from "./SetRegistrationPasswordScreen";
 import { EmailVerificationScreen } from "./EmailVerificationScreen";
 import { ProfileCompletionScreen } from "./ProfileCompletionScreen";
@@ -44,21 +45,27 @@ function getMessage(status: AuthRegistrationResult["status"]): string | null {
 export function SignUpScreen({ onRegister, onCompleteGoogleRegistration, onSendEmailVerification, onCheckEligibility, onCompleteProfile }: Props) {
   const [step, setStep] = useState<"credentials" | "password" | "verification" | "profile">("credentials");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const showToast = useToast();
 
   async function run(action: () => Promise<AuthRegistrationResult>) {
     if (isSubmitting) return { status: "request_failed" } as AuthRegistrationResult;
     setIsSubmitting(true);
-    setErrorMessage(null);
     try {
       const result = await action();
       if (result.status === "password_setup_required") setStep("password");
       else if (result.status === "email_verification_required" || result.status === "email_unverified") setStep("verification");
       else if (result.status === "registration_eligible") setStep("profile");
-      else if (result.status !== "authenticated") setErrorMessage(getMessage(result.status));
+      if (result.status === "password_setup_required") showToast({ kind: "success", title: "Compte Google reconnu", description: "Définissez un mot de passe pour ce compte." });
+      else if (result.status === "email_verification_required") showToast({ kind: "success", title: "Compte créé", description: "Un e-mail de vérification est nécessaire pour continuer." });
+      else if (result.status === "registration_eligible") showToast({ kind: "success", title: "Adresse vérifiée", description: "Vous pouvez compléter votre profil." });
+      else if (result.status === "authenticated") showToast({ kind: "success", title: "Inscription terminée" });
+      else if (result.status !== "email_unverified") {
+        const message = getMessage(result.status);
+        if (message) showToast({ kind: "error", title: "Inscription non terminée", description: message });
+      }
       return result;
     } catch {
-      setErrorMessage("L’inscription n’a pas abouti. Réessayez.");
+      showToast({ kind: "error", title: "Inscription non terminée", description: "L’inscription n’a pas abouti. Réessayez." });
       return { status: "request_failed" } as AuthRegistrationResult;
     } finally {
       setIsSubmitting(false);
@@ -97,7 +104,6 @@ export function SignUpScreen({ onRegister, onCompleteGoogleRegistration, onSendE
 
   return (
     <SignUpCredentialsScreen
-      errorMessage={errorMessage}
       isSubmitting={isSubmitting}
       onGoogle={() => run(() => onRegister({ method: "google" }))}
       onRegister={(input) => run(() => onRegister(input))}

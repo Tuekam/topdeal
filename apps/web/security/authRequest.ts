@@ -29,6 +29,7 @@ export function isAllowedAuthMutation(
   request: Request,
   expectedOrigin: string,
   acceptedContentTypes: string[] = ["application/json"],
+  acceptedMethods: string[] = ["POST"],
 ): boolean {
   const contentType = request.headers
     .get("content-type")
@@ -37,7 +38,7 @@ export function isAllowedAuthMutation(
     .toLowerCase();
 
   return (
-    request.method === "POST" &&
+    acceptedMethods.includes(request.method) &&
     request.headers.get("origin") === expectedOrigin &&
     request.headers.get("sec-fetch-site") === "same-origin" &&
     request.headers.get("x-topdeal-request") === "1" &&

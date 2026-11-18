@@ -30,7 +30,7 @@ export function SignUpPageClient() {
   async function completeProfile(profile: { givenName: string; familyName: string; telephone: string; birthDate: string }): Promise<AuthRegistrationResult> {
     const result = await resolveCompleteAuthProfileFromWebUseCase().execute(profile);
     if (result.status === "authenticated") {
-      router.replace("/");
+      router.replace("/annonces");
       router.refresh();
     }
     return result;

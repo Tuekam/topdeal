@@ -10,6 +10,7 @@ export type PublicAnnonceRecord = {
   disponibilite: "DISPONIBLE" | "INDISPONIBLE" | "EPUISEE";
   quartier: string | null;
   trocAccepte: boolean;
+  affiliationDisponible: boolean;
   categorie: { id: string; nom: string; parent: { id: string; nom: string } | null };
   vendeur: { prenom: string; nom: string; dateCreation: string };
   photos: Array<StoredAnnoncePhoto & { id: string; ordre: number }>;

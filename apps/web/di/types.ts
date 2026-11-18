@@ -15,7 +15,20 @@ import type {
   ChangeAnnonceVisibilityUseCase,
   GetOwnedAnnoncesRepository,
   GetOwnedAnnoncesUseCase,
+  GetOwnedAnnonceForEditRepository,
+  GetOwnedAnnonceForEditUseCase,
+  SetAnnonceFavoriteRepository,
+  GetAnnonceFavoriteIdsRepository,
+  GetFavoriteAnnoncesRepository,
+  SetAnnonceFavoriteUseCase,
+  GetAnnonceFavoriteIdsUseCase,
+  GetFavoriteAnnoncesUseCase,
 } from "@topdeal/feature-annonce/core";
+import type {
+  AnnonceAffiliateLinkRepository,
+  CreateAnnonceAffiliateLinkUseCase,
+  GetAnnonceAffiliatePriceUseCase,
+} from "@topdeal/feature-affiliation/core";
 import type {
   AuthIdentityProvider,
   AuthUserRepository,
@@ -42,6 +55,17 @@ export type AppCradle = {
   changeAnnonceVisibilityUseCase: ChangeAnnonceVisibilityUseCase;
   getOwnedAnnoncesRepository: GetOwnedAnnoncesRepository;
   getOwnedAnnoncesUseCase: GetOwnedAnnoncesUseCase;
+  getOwnedAnnonceForEditRepository: GetOwnedAnnonceForEditRepository;
+  getOwnedAnnonceForEditUseCase: GetOwnedAnnonceForEditUseCase;
+  setAnnonceFavoriteRepository: SetAnnonceFavoriteRepository;
+  getAnnonceFavoriteIdsRepository: GetAnnonceFavoriteIdsRepository;
+  getFavoriteAnnoncesRepository: GetFavoriteAnnoncesRepository;
+  setAnnonceFavoriteUseCase: SetAnnonceFavoriteUseCase;
+  getAnnonceFavoriteIdsUseCase: GetAnnonceFavoriteIdsUseCase;
+  getFavoriteAnnoncesUseCase: GetFavoriteAnnoncesUseCase;
+  annonceAffiliateLinkRepository: AnnonceAffiliateLinkRepository;
+  createAnnonceAffiliateLinkUseCase: CreateAnnonceAffiliateLinkUseCase;
+  getAnnonceAffiliatePriceUseCase: GetAnnonceAffiliatePriceUseCase;
   identityProvider: AuthIdentityProvider;
   userRepository: AuthUserRepository;
   createWebSessionUseCase: CreateWebSessionUseCase;

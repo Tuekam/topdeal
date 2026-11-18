@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BackButton, Button, Card } from "@topdeal/ui";
+import { BackButton, Button, Card, useToast } from "@topdeal/ui";
 import type { ReactNode } from "react";
 type AuthStatusResult = { status: string };
 import type { SendEmailVerificationResult } from "../../core";
@@ -31,26 +31,24 @@ const defaultMessages: EmailVerificationMessages = {
 export function EmailVerificationScreen({ onSendVerification, onContinue, title = "Vérifiez votre adresse e-mail", description = "La vérification de votre adresse est nécessaire pour accéder à votre compte TopDeal.", messages = {} }: EmailVerificationScreenProps) {
   const [isSending, setIsSending] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const showToast = useToast();
   const text = { ...defaultMessages, ...messages };
 
   async function sendVerification() {
     if (isSending || isChecking) return;
     setIsSending(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
     try {
       const result = await onSendVerification();
       if (result.status === "verification_email_sent") {
-        setStatusMessage("E-mail envoyé. Ouvrez le lien de vérification, puis revenez ici.");
+        const message = "E-mail envoyé. Ouvrez le lien de vérification, puis revenez ici.";
+        showToast({ kind: "success", title: "E-mail envoyé", description: message });
       } else if (result.status === "identity_unavailable") {
-        setErrorMessage(text.identityUnavailable);
+        showToast({ kind: "error", title: "E-mail non envoyé", description: text.identityUnavailable });
       } else {
-        setErrorMessage("L’envoi de l’e-mail a échoué. Réessayez dans un instant.");
+        showToast({ kind: "error", title: "E-mail non envoyé", description: "L’envoi a échoué. Réessayez dans un instant." });
       }
     } catch {
-      setErrorMessage("L’envoi de l’e-mail a échoué. Réessayez dans un instant.");
+      showToast({ kind: "error", title: "E-mail non envoyé", description: "L’envoi a échoué. Réessayez dans un instant." });
     } finally {
       setIsSending(false);
     }
@@ -59,21 +57,23 @@ export function EmailVerificationScreen({ onSendVerification, onContinue, title 
   async function checkVerification() {
     if (isSending || isChecking) return;
     setIsChecking(true);
-    setStatusMessage(null);
-    setErrorMessage(null);
     try {
       const result = await onContinue();
       if (result.status === "email_unverified") {
-        setErrorMessage("Firebase n’a pas encore confirmé la vérification. Ouvrez le lien reçu, puis réessayez.");
+        showToast({ kind: "error", title: "Adresse non vérifiée", description: "Ouvrez le lien reçu, puis réessayez." });
       } else if (result.status === "email_already_in_use") {
-        setErrorMessage(text.emailAlreadyInUse);
+        showToast({ kind: "error", title: "Vérification impossible", description: text.emailAlreadyInUse });
       } else if (result.status === "registration_required") {
-        setErrorMessage(text.registrationRequired);
+        showToast({ kind: "error", title: "Vérification impossible", description: text.registrationRequired });
       } else if (result.status !== "authenticated" && result.status !== "profile_required" && result.status !== "registration_eligible") {
-        setErrorMessage(text.requestFailed);
+        showToast({ kind: "error", title: "Vérification impossible", description: text.requestFailed });
+      } else if (result.status === "authenticated") {
+        showToast({ kind: "success", title: "Adresse vérifiée", description: "Votre connexion est prête." });
+      } else {
+        showToast({ kind: "success", title: "Adresse vérifiée", description: "Vous pouvez poursuivre votre inscription." });
       }
     } catch {
-      setErrorMessage(text.requestFailed);
+      showToast({ kind: "error", title: "Vérification impossible", description: text.requestFailed });
     } finally {
       setIsChecking(false);
     }
@@ -87,9 +87,6 @@ export function EmailVerificationScreen({ onSendVerification, onContinue, title 
             <h1 className="text-[30px] leading-[1.2] font-semibold tracking-tight" id="email-verification-title">{title}</h1>
             <p className="mt-1 text-text-secondary">{description}</p>
           </header>
-
-          {statusMessage && <p className="mt-5 rounded-notice bg-surface-muted px-3 py-[11px] text-[13px] leading-[1.5] text-text-secondary" role="status">{statusMessage}</p>}
-          {errorMessage && <p className="mt-5 rounded-notice bg-error-background px-3 py-[11px] text-[13px] leading-[1.5] text-error" role="alert">{errorMessage}</p>}
 
           <div className="mt-6 space-y-3">
             <Button className="w-full" disabled={isSending || isChecking} onClick={() => void checkVerification()}>

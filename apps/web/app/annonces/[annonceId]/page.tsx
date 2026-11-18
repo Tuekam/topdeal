@@ -3,6 +3,7 @@ import { AnnonceDetailsContent } from "./AnnonceDetailsContent";
 
 type PageProps = {
   params: Promise<{ annonceId: string }>;
+  searchParams: Promise<{ affiliation?: string | string[] }>;
 };
 
 function AnnonceDetailsFallback() {
@@ -16,10 +17,10 @@ function AnnonceDetailsFallback() {
   );
 }
 
-export default function AnnonceDetailsPage({ params }: PageProps) {
+export default function AnnonceDetailsPage({ params, searchParams }: PageProps) {
   return (
     <Suspense fallback={<AnnonceDetailsFallback />}>
-      <AnnonceDetailsContent params={params} />
+      <AnnonceDetailsContent params={params} searchParams={searchParams} />
     </Suspense>
   );
 }

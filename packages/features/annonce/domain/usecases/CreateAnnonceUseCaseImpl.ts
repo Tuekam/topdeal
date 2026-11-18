@@ -14,6 +14,8 @@ const ALLOWED_PHOTO_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+const PRICE_PATTERN = /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/;
+const AFFILIATE_REWARD_PATTERN = /^[1-9]\d{0,9}$/;
 
 type Dependencies = {
   createAnnonceRepository: CreateAnnonceRepository;
@@ -32,6 +34,12 @@ function isValidInput(input: CreateAnnonceInput): string | null {
     !input.categorieSouhaiteeId &&
     !input.souhaitEchangeDescription?.trim()
   ) return "souhaitEchangeDescription";
+  if (input.affiliationActive && (input.trocAccepte || !AFFILIATE_REWARD_PATTERN.test(input.remunerationAffiliation))) {
+    return "remunerationAffiliation";
+  }
+  if (input.affiliationActive && Number(input.prix) + Number(input.remunerationAffiliation) > 9_999_999_999.99) {
+    return "remunerationAffiliation";
+  }
   if (input.photos.length < MIN_PHOTOS || input.photos.length > MAX_PHOTOS) {
     return "photos";
   }

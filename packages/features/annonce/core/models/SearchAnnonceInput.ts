@@ -1,3 +1,5 @@
+import type { AnnonceSort } from "./AnnonceSort";
+
 export type SearchAnnonceInput = {
   query: string;
   categorieId: string | null;
@@ -6,5 +8,6 @@ export type SearchAnnonceInput = {
   prixMax: string | null;
   quartier: string | null;
   trocAccepte: boolean | null;
+  sort: AnnonceSort;
   cursor: string | null;
 };

@@ -1,6 +1,6 @@
 import { resolveChangeAnnonceVisibilityUseCase } from "../../../../../di/container";
 import { getAuthAppOrigin, isAllowedAuthMutation } from "../../../../../security/authRequest";
-import { getVerifiedUserId } from "../../../../../security/verifiedSession";
+import { getVerifiedUserForApi } from "../../../../../security/verifiedSession";
 import { ANNONCE_API_ERROR_CODES as ERROR } from "../../errorCodes";
 
 type RouteContext = {
@@ -10,12 +10,13 @@ type RouteContext = {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function PATCH(request: Request, context: RouteContext): Promise<Response> {
-  if (!isAllowedAuthMutation(request, getAuthAppOrigin())) {
+  if (!isAllowedAuthMutation(request, getAuthAppOrigin(), ["application/json"], ["PATCH"])) {
     return Response.json({ code: ERROR.INVALID_REQUEST }, { status: 403 });
   }
 
-  const userId = await getVerifiedUserId();
-  if (!userId) return Response.json({ code: ERROR.UNAUTHENTICATED }, { status: 401 });
+  const verifiedUser = await getVerifiedUserForApi();
+  if (verifiedUser.status !== "authenticated") return verifiedUser.response;
+  const { userId } = verifiedUser;
 
   const { annonceId } = await context.params;
   if (!UUID_PATTERN.test(annonceId)) {

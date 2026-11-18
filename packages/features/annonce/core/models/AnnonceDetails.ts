@@ -10,6 +10,7 @@ export type AnnonceDetails = {
   disponibilite: "DISPONIBLE" | "INDISPONIBLE" | "EPUISEE";
   quartier: string;
   trocAccepte: boolean;
+  affiliationDisponible: boolean;
   categorie: { id: string; nom: string; parent: { id: string; nom: string } | null };
   vendeur: { nomComplet: string; dateCreation: string };
   photos: AnnoncePhoto[];

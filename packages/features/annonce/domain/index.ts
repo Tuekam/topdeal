@@ -5,3 +5,7 @@ export { SearchAnnoncesUseCaseImpl } from "./usecases/SearchAnnoncesUseCaseImpl"
 export { UpdateAnnonceUseCaseImpl } from "./usecases/UpdateAnnonceUseCaseImpl";
 export { ChangeAnnonceVisibilityUseCaseImpl } from "./usecases/ChangeAnnonceVisibilityUseCaseImpl";
 export { GetOwnedAnnoncesUseCaseImpl } from "./usecases/GetOwnedAnnoncesUseCaseImpl";
+export { GetOwnedAnnonceForEditUseCaseImpl } from "./usecases/GetOwnedAnnonceForEditUseCaseImpl";
+export { SetAnnonceFavoriteUseCaseImpl } from "./usecases/SetAnnonceFavoriteUseCaseImpl";
+export { GetAnnonceFavoriteIdsUseCaseImpl } from "./usecases/GetAnnonceFavoriteIdsUseCaseImpl";
+export { GetFavoriteAnnoncesUseCaseImpl } from "./usecases/GetFavoriteAnnoncesUseCaseImpl";

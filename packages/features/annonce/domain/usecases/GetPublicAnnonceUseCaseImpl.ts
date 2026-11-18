@@ -35,6 +35,7 @@ export class GetPublicAnnonceUseCaseImpl implements GetPublicAnnonceUseCase {
       disponibilite: annonce.disponibilite,
       quartier: annonce.quartier ?? "",
       trocAccepte: annonce.trocAccepte,
+      affiliationDisponible: annonce.affiliationDisponible,
       categorie: annonce.categorie,
       vendeur: {
         nomComplet: `${annonce.vendeur.prenom} ${annonce.vendeur.nom}`.trim(),

@@ -10,4 +10,6 @@ export type AnnonceDraft = {
   photos: File[];
   trocAccepte: boolean;
   souhaitEchangeDescription: string;
+  affiliationActive: boolean;
+  remunerationAffiliation: string;
 };

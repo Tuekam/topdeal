@@ -11,6 +11,8 @@ export function SiteSearchForm() {
   const query = searchParams.get("q") ?? "";
   const [value, setValue] = useState(query);
   const previousPathname = useRef(pathname);
+  const searchesCurrentPage = pathname === "/annonces" ||
+    pathname === "/annonces/favoris" || pathname === "/annonces/mes-annonces";
 
   useEffect(() => {
     if (previousPathname.current !== pathname) {
@@ -35,7 +37,7 @@ export function SiteSearchForm() {
         : new URLSearchParams();
       const trimmedValue = value.trim();
       if (trimmedValue === query) return;
-      if (pathname === "/annonces") {
+      if (searchesCurrentPage) {
         window.dispatchEvent(new CustomEvent(ANNONCE_SEARCH_QUERY_EVENT, { detail: { query: trimmedValue } }));
         return;
       }
@@ -45,10 +47,10 @@ export function SiteSearchForm() {
       params.delete("cursorHistory");
       const nextUrl = `/annonces${params.size ? `?${params.toString()}` : ""}`;
       router.replace(nextUrl, { scroll: false });
-    }, 220);
+    }, searchesCurrentPage ? 0 : 220);
 
     return () => window.clearTimeout(timeout);
-  }, [pathname, query, router, value]);
+  }, [pathname, query, router, searchesCurrentPage, value]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,7 +58,7 @@ export function SiteSearchForm() {
       ? new URLSearchParams(window.location.search)
       : new URLSearchParams();
     const trimmedValue = value.trim();
-    if (pathname === "/annonces") {
+    if (searchesCurrentPage) {
       window.dispatchEvent(new CustomEvent(ANNONCE_SEARCH_QUERY_EVENT, { detail: { query: trimmedValue } }));
       return;
     }

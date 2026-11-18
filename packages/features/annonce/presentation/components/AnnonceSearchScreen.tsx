@@ -2,10 +2,13 @@
 
 import type { AnnonceCategory } from "../../core/models/AnnonceCategory";
 import type { AnnonceSearchItem } from "../../core/models/AnnonceSearchItem";
-import { Input, Select } from "@topdeal/ui";
+import { Button, Select, useToast } from "@topdeal/ui";
+import type { AnnonceSort } from "../../core/models/AnnonceSort";
 import { AnnoncePagination } from "./AnnoncePagination";
+import { AnnonceFilterFields, getAnnonceCategoryLabel, sortAnnonceRootCategories } from "./AnnonceFilterFields";
 import { AnnonceFavoriteButton } from "./AnnonceFavoriteButton";
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { AnnonceProductCard } from "./AnnonceProductCard";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ANNONCE_SEARCH_QUERY_EVENT, type AnnonceSearchQueryEvent } from "../types/AnnonceSearchQueryEvent";
 
 type AnnonceSearchFilters = {
@@ -16,6 +19,7 @@ type AnnonceSearchFilters = {
   prixMax: string | null;
   quartier: string | null;
   trocAccepte: boolean | null;
+  sort: AnnonceSort;
 };
 
 type AnnonceSearchScreenProps = {
@@ -26,35 +30,6 @@ type AnnonceSearchScreenProps = {
   previousPageHref: string | null;
   nextPageHref: string | null;
 };
-
-function formatPrice(value: string): string {
-  return new Intl.NumberFormat("fr-CM", {
-    style: "currency",
-    currency: "XAF",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-}
-
-function getCategoryLabel(name: string): string {
-  return name === "Électronique" ? "Appareils électroniques" : name;
-}
-
-function orderCategories(categories: AnnonceCategory[]): AnnonceCategory[] {
-  const displayOrder = [
-    "Appareils électroniques",
-    "Vêtements et mode",
-    "Accessoires",
-    "Maison et mobilier",
-    "Autres",
-  ];
-
-  return [...categories].sort((first, second) => {
-    const firstIndex = displayOrder.indexOf(getCategoryLabel(first.name));
-    const secondIndex = displayOrder.indexOf(getCategoryLabel(second.name));
-    return (firstIndex < 0 ? displayOrder.length : firstIndex) -
-      (secondIndex < 0 ? displayOrder.length : secondIndex);
-  });
-}
 
 function hasActiveFilters(filters: AnnonceSearchFilters): boolean {
   return Boolean(
@@ -72,6 +47,7 @@ function createSearchParams(filters: AnnonceSearchFilters): URLSearchParams {
   if (filters.prixMax) params.set("prixMax", filters.prixMax);
   if (filters.quartier) params.set("quartier", filters.quartier);
   if (filters.trocAccepte !== null) params.set("trocAccepte", String(filters.trocAccepte));
+  if (filters.sort !== "recent") params.set("sort", filters.sort);
   return params;
 }
 
@@ -90,11 +66,41 @@ export function AnnonceSearchScreen({
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isCompactFilterViewport, setIsCompactFilterViewport] = useState(true);
   const [visibleItems, setVisibleItems] = useState(items);
+  const [favoriteState, setFavoriteState] = useState<{ itemIds: string; ids: Set<string> }>(() => ({ itemIds: "", ids: new Set() }));
   const [visibleNextPageHref, setVisibleNextPageHref] = useState(nextPageHref);
   const [visiblePreviousPageHref, setVisiblePreviousPageHref] = useState(previousPageHref);
   const [visiblePage, setVisiblePage] = useState(currentPage);
   const [displayFilters, setDisplayFilters] = useState(filters);
   const [isFiltering, setIsFiltering] = useState(false);
+  const showToast = useToast();
+  const visibleItemIds = visibleItems.map((item) => item.id).join(",");
+  const favoriteIdsLoaded = !visibleItemIds || favoriteState.itemIds === visibleItemIds;
+  const favoriteIds = favoriteState.ids;
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!visibleItemIds) return () => controller.abort();
+
+    void fetch(`/api/annonces/favoris?ids=${visibleItemIds}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) {
+        if (response.status !== 401 && !controller.signal.aborted) {
+          showToast({ kind: "error", title: "Favoris non chargés", description: "Impossible de vérifier les annonces enregistrées." });
+        }
+        if (!controller.signal.aborted) setFavoriteState({ itemIds: visibleItemIds, ids: new Set() });
+        return;
+      }
+      const result: { favoriteIds: string[] } = await response.json();
+      if (!controller.signal.aborted) setFavoriteState({ itemIds: visibleItemIds, ids: new Set(result.favoriteIds) });
+    }).catch(() => {
+      if (!controller.signal.aborted) {
+        setFavoriteState({ itemIds: visibleItemIds, ids: new Set() });
+        showToast({ kind: "error", title: "Favoris non chargés", description: "Vérifiez votre connexion puis réessayez." });
+      }
+    });
+    return () => controller.abort();
+  }, [visibleItemIds]);
   useEffect(() => () => {
     if (filterTimer.current !== null) window.clearTimeout(filterTimer.current);
     filterRequest.current?.abort();
@@ -142,13 +148,6 @@ export function AnnonceSearchScreen({
     };
   }, []);
   useEffect(() => {
-    setVisibleItems(items);
-    setVisibleNextPageHref(nextPageHref);
-    setVisiblePreviousPageHref(previousPageHref);
-    setVisiblePage(currentPage);
-    setDisplayFilters(filters);
-  }, [currentPage, filters, items, nextPageHref, previousPageHref]);
-  useEffect(() => {
     function handleHeaderSearch(event: Event) {
       const query = (event as AnnonceSearchQueryEvent).detail.query;
       const nextFilters = { ...displayFilters, query };
@@ -173,7 +172,10 @@ export function AnnonceSearchScreen({
       setIsFiltering(true);
       try {
         const response = await fetch(`/api/annonces?${params.toString()}`, { cache: "no-store", signal: controller.signal });
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (!controller.signal.aborted) showToast({ kind: "error", title: "Recherche impossible", description: "Impossible de charger les annonces. Réessayez." });
+          return;
+        }
         const result: { items: AnnonceSearchItem[]; nextCursor: string | null } = await response.json();
         setVisibleItems(result.items);
         setVisiblePreviousPageHref(null);
@@ -185,7 +187,7 @@ export function AnnonceSearchScreen({
         } else setVisibleNextPageHref(null);
         window.history.replaceState(null, "", `/annonces${params.size ? `?${params.toString()}` : ""}`);
       } catch {
-        // Les résultats affichés restent disponibles si la recherche échoue ou est remplacée.
+        if (!controller.signal.aborted) showToast({ kind: "error", title: "Recherche impossible", description: "Vérifiez votre connexion puis réessayez." });
       } finally {
         if (filterRequest.current === controller) {
           filterRequest.current = null;
@@ -211,12 +213,6 @@ export function AnnonceSearchScreen({
       quartier: String(formData.get("quartier") ?? "").trim() || null,
       trocAccepte: formData.get("trocAccepte") === "true" ? true : formData.get("trocAccepte") === "false" ? false : null,
     };
-  }
-  function updateFilters(event: ChangeEvent<HTMLSelectElement | HTMLInputElement>) {
-    const form = event.currentTarget.form;
-    if (!form) return;
-    const nextFilters = readFilters(form);
-    scheduleSearch(createSearchParams(nextFilters), nextFilters);
   }
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -246,9 +242,8 @@ export function AnnonceSearchScreen({
     };
     scheduleSearch(createSearchParams(nextFilters), nextFilters);
   }
-  const rootCategories = orderCategories(categories.filter((category) => category.parentId === null));
+  const rootCategories = sortAnnonceRootCategories(categories.filter((category) => category.parentId === null));
   const activeCategory = categories.find((category) => category.id === displayFilters.categorieId);
-  const selectedRootId = activeCategory?.parentId ?? activeCategory?.id ?? "";
   const filterForm = (
     <form
       aria-label="Filtres des annonces"
@@ -272,33 +267,18 @@ export function AnnonceSearchScreen({
         </button>
       </div>
       <input name="q" type="hidden" value={displayFilters.query} readOnly />
-      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
-        <Select onChange={updateFilters} value={selectedRootId} label="Catégorie" name="categorieParentId">
-          <option value="">Toutes les catégories</option>
-          {rootCategories.map((category) => <option key={category.id} value={category.id}>{getCategoryLabel(category.name)}</option>)}
-        </Select>
-        <Select onChange={updateFilters} value={activeCategory?.parentId ? activeCategory.id : ""} label="Sous-catégorie" name="sousCategorieId">
-          <option value="">Toutes les sous-catégories</option>
-          {categories.filter((category) => category.parentId === selectedRootId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-        </Select>
-        <Select onChange={updateFilters} value={displayFilters.etat ?? ""} label="État" name="etat">
-          <option value="">Tous les états</option>
-          <option value="NEUF">Neuf</option>
-          <option value="OCCASION">Occasion</option>
-        </Select>
-        <Select onChange={updateFilters} value={displayFilters.trocAccepte === null ? "" : String(displayFilters.trocAccepte)} label="Troc" name="trocAccepte">
-          <option value="">Avec ou sans troc</option>
-          <option value="true">Troc accepté</option>
-          <option value="false">Troc non accepté</option>
-        </Select>
-        <Input onChange={updateFilters} value={displayFilters.quartier ?? ""} label="Quartier / secteur" maxLength={150} name="quartier" />
-        <Input onChange={updateFilters} value={displayFilters.prixMin ?? ""} label="Prix minimum (FCFA)" min="0" max="9999999999.99" name="prixMin" step="0.01" type="number" />
-        <Input onChange={updateFilters} value={displayFilters.prixMax ?? ""} label="Prix maximum (FCFA)" min="0" max="9999999999.99" name="prixMax" step="0.01" type="number" />
-      </div>
+      <AnnonceFilterFields
+        categories={categories}
+        filters={displayFilters}
+        onChange={(change) => {
+          const nextFilters = { ...displayFilters, ...change };
+          scheduleSearch(createSearchParams(nextFilters), nextFilters);
+        }}
+      />
       <div className="flex flex-col items-stretch gap-3 border-t border-border pt-4 md:flex-row md:items-center md:justify-between">
         <button className="order-3 cursor-pointer self-start border-0 bg-transparent p-0 text-sm font-medium text-text-secondary underline md:order-1" onClick={clearFilters} type="button">Effacer les filtres</button>
         <span aria-live="polite" className="order-2 text-xs text-text-secondary">Les résultats se mettent à jour automatiquement.</span>
-        <button className="td-button td-button--primary order-1 min-h-11 w-full px-5 md:order-3 md:w-auto" type="submit">Valider les filtres</button>
+        <Button className="order-1 w-full px-5 md:order-3 md:w-auto" type="submit">Valider les filtres</Button>
       </div>
     </form>
   );
@@ -306,7 +286,7 @@ export function AnnonceSearchScreen({
     <>
       <section className="mx-auto flex w-full max-w-content flex-wrap items-end justify-between gap-6 px-4 pt-10 sm:px-6">
         <div>
-          <h1 className="text-[30px] font-semibold leading-tight tracking-tight text-text">Bonjour</h1>
+          <h1 className="text-2xl font-semibold leading-tight tracking-tight text-text sm:text-[30px]">Bonjour</h1>
           <p className="mt-1.5 text-text-secondary">Les dernières annonces de Bafoussam.</p>
         </div>
         <div aria-label="Résumé du compte" className="flex rounded-xl border border-border bg-surface">
@@ -315,7 +295,7 @@ export function AnnonceSearchScreen({
 
       <section className="mx-auto w-full max-w-content px-4 pt-8 sm:px-6" aria-label="Parcourir les annonces">
         <div className="relative flex flex-wrap items-end justify-between gap-4 border-b border-border">
-          <nav aria-label="Catégories" className="flex max-w-full gap-8 overflow-x-auto">
+          <nav aria-label="Catégories" className="flex max-w-full gap-8 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
               aria-current={displayFilters.categorieId ? undefined : "page"}
               aria-pressed={!displayFilters.categorieId}
@@ -331,7 +311,7 @@ export function AnnonceSearchScreen({
                 onClick={() => chooseCategory(category.id)}
                 type="button"
                 key={category.id}
-              >{getCategoryLabel(category.name)}</button>
+              >{getAnnonceCategoryLabel(category.name)}</button>
             ))}
           </nav>
 
@@ -349,7 +329,7 @@ export function AnnonceSearchScreen({
               {isFiltersOpen && isCompactFilterViewport && (
                 <dialog
                   aria-label="Filtres des annonces"
-                  className="fixed top-1/2 left-1/2 z-50 m-0 max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[680px] -translate-x-1/2 -translate-y-1/2 overflow-hidden border-0 bg-transparent p-0 shadow-none backdrop:bg-black/40"
+                  className="fixed top-1/2 left-1/2 z-50 m-0 max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[680px] -translate-x-1/2 -translate-y-1/2 overflow-hidden border-0 bg-transparent p-0 shadow-none backdrop:bg-overlay"
                   onCancel={(event) => {
                     event.preventDefault();
                     closeFilters();
@@ -371,12 +351,15 @@ export function AnnonceSearchScreen({
               )}
               {isFiltersOpen && !isCompactFilterViewport && filterForm}
             </details>
-            <span aria-label="Tri : plus récentes" className="flex h-9 items-center gap-2 rounded-[10px] border border-input-border bg-surface px-[14px] text-sm font-medium text-text">
-              Plus récentes
-              <svg aria-hidden="true" fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </span>
+            <Select aria-label="Trier les annonces" className="!h-9 !min-h-0 !w-auto !min-w-0 px-[14px] text-sm font-medium" fieldClassName="!w-auto" label="Trier les annonces" labelClassName="sr-only" onChange={(event) => {
+              const nextFilters = { ...displayFilters, sort: event.currentTarget.value as AnnonceSort };
+              scheduleSearch(createSearchParams(nextFilters), nextFilters, 0);
+            }} value={displayFilters.sort}>
+              <option value="recent">Plus récentes</option>
+              <option value="oldest">Plus anciennes</option>
+              <option value="price-asc">Prix croissant</option>
+              <option value="price-desc">Prix décroissant</option>
+            </Select>
           </div>
         </div>
       </section>
@@ -389,37 +372,18 @@ export function AnnonceSearchScreen({
             <p className="mt-2 text-sm text-text-secondary">Modifiez vos filtres ou lancez une autre recherche.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
             {visibleItems.map((item) => (
-              <article className="relative overflow-hidden rounded-card border border-border bg-surface transition-colors hover:border-input-border" key={item.id}>
-                <div className="relative flex aspect-[4/3] items-center justify-center bg-image-tile">
-                  {item.photoUrl ? (
-                    <img alt={`${item.titre}, photo du produit`} className="h-full w-full object-cover" height="240" loading="lazy" src={item.photoUrl} width="320" />
-                  ) : (
-                    <svg aria-hidden="true" className="text-[#A39A91]" fill="none" height="60" viewBox="0 0 64 64" width="60" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
-                      <rect height="40" rx="3" width="48" x="8" y="12" />
-                      <circle cx="22" cy="25" r="4" />
-                      <path d="m12 48 15-15 9 9 7-7 9 13" />
-                    </svg>
-                  )}
-                  {item.trocAccepte && <span className="pointer-events-none absolute left-3 top-3 z-[1] rounded-[6px] border border-border bg-surface px-[9px] py-[3px] text-xs font-medium text-text">Troc accepté</span>}
-                  <AnnonceFavoriteButton annonceTitle={item.titre} />
-                </div>
-                <div className="p-3 sm:p-4">
-                  <div className="tabular-nums text-lg font-semibold tracking-tight text-text">{formatPrice(item.prix)}</div>
-                  <a className="mt-0.5 block truncate text-[15px] text-text after:absolute after:inset-0" href={`/annonces/${item.id}`} title={item.titre}>{item.titre}</a>
-                  <div className="mt-2.5 flex items-center gap-3.5 text-[13px] text-text-secondary">
-                    <span>{item.etat === "NEUF" ? "Neuf" : "Occasion"}</span>
-                    <span className="flex min-w-0 items-center gap-1 truncate">
-                      <svg aria-hidden="true" className="shrink-0" fill="none" height="13" viewBox="0 0 24 24" width="13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
-                        <path d="M12 21s6-5.6 6-10a6 6 0 0 0-12 0c0 4.4 6 10 6 10Z" />
-                        <circle cx="12" cy="11" r="2" />
-                      </svg>
-                      {item.quartier ?? "Bafoussam"}
-                    </span>
-                  </div>
-                </div>
-              </article>
+              <AnnonceProductCard
+                annonce={item}
+                favoriteControl={<AnnonceFavoriteButton
+                  annonceId={item.id}
+                  annonceTitle={item.titre}
+                  favoriteStateReady={favoriteIdsLoaded}
+                  isFavorite={favoriteIds.has(item.id)}
+                />}
+                key={item.id}
+              />
             ))}
           </div>
         )}

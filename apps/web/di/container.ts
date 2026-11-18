@@ -14,8 +14,13 @@ import {
   UpdateAnnonceRepositoryImpl,
   ChangeAnnonceVisibilityRepositoryImpl,
   GetOwnedAnnoncesRepositoryImpl,
+  GetOwnedAnnonceForEditRepositoryImpl,
   S3AnnoncePhotoStorage,
+  SetAnnonceFavoriteRepositoryImpl,
+  GetAnnonceFavoriteIdsRepositoryImpl,
+  GetFavoriteAnnoncesRepositoryImpl,
 } from "@topdeal/feature-annonce/data";
+import { AnnonceAffiliateLinkRepositoryImpl } from "@topdeal/feature-affiliation/data";
 import {
   CreateAnnonceUseCaseImpl,
   GetPublicAnnonceUseCaseImpl,
@@ -24,7 +29,12 @@ import {
   UpdateAnnonceUseCaseImpl,
   ChangeAnnonceVisibilityUseCaseImpl,
   GetOwnedAnnoncesUseCaseImpl,
+  GetOwnedAnnonceForEditUseCaseImpl,
+  SetAnnonceFavoriteUseCaseImpl,
+  GetAnnonceFavoriteIdsUseCaseImpl,
+  GetFavoriteAnnoncesUseCaseImpl,
 } from "@topdeal/feature-annonce/domain";
+import { CreateAnnonceAffiliateLinkUseCaseImpl, GetAnnonceAffiliatePriceUseCaseImpl } from "@topdeal/feature-affiliation/domain";
 import type {
   CreateAnnonceUseCase,
   GetPublicAnnonceUseCase,
@@ -33,7 +43,15 @@ import type {
   UpdateAnnonceUseCase,
   ChangeAnnonceVisibilityUseCase,
   GetOwnedAnnoncesUseCase,
+  GetOwnedAnnonceForEditUseCase,
+  SetAnnonceFavoriteUseCase,
+  GetAnnonceFavoriteIdsUseCase,
+  GetFavoriteAnnoncesUseCase,
 } from "@topdeal/feature-annonce/core";
+import type {
+  CreateAnnonceAffiliateLinkUseCase,
+  GetAnnonceAffiliatePriceUseCase,
+} from "@topdeal/feature-affiliation/core";
 import {
   FirebaseAdminIdentityProvider,
   AuthUserRepositoryImpl,
@@ -95,6 +113,17 @@ export function buildContainer(): AwilixContainer<AppCradle> {
     changeAnnonceVisibilityUseCase: asClass(ChangeAnnonceVisibilityUseCaseImpl).singleton(),
     getOwnedAnnoncesRepository: asClass(GetOwnedAnnoncesRepositoryImpl).singleton(),
     getOwnedAnnoncesUseCase: asClass(GetOwnedAnnoncesUseCaseImpl).singleton(),
+    getOwnedAnnonceForEditRepository: asClass(GetOwnedAnnonceForEditRepositoryImpl).singleton(),
+    getOwnedAnnonceForEditUseCase: asClass(GetOwnedAnnonceForEditUseCaseImpl).singleton(),
+    setAnnonceFavoriteRepository: asClass(SetAnnonceFavoriteRepositoryImpl).singleton(),
+    getAnnonceFavoriteIdsRepository: asClass(GetAnnonceFavoriteIdsRepositoryImpl).singleton(),
+    getFavoriteAnnoncesRepository: asClass(GetFavoriteAnnoncesRepositoryImpl).singleton(),
+    annonceAffiliateLinkRepository: asClass(AnnonceAffiliateLinkRepositoryImpl).singleton(),
+    setAnnonceFavoriteUseCase: asClass(SetAnnonceFavoriteUseCaseImpl).singleton(),
+    getAnnonceFavoriteIdsUseCase: asClass(GetAnnonceFavoriteIdsUseCaseImpl).singleton(),
+    getFavoriteAnnoncesUseCase: asClass(GetFavoriteAnnoncesUseCaseImpl).singleton(),
+    createAnnonceAffiliateLinkUseCase: asClass(CreateAnnonceAffiliateLinkUseCaseImpl).singleton(),
+    getAnnonceAffiliatePriceUseCase: asClass(GetAnnonceAffiliatePriceUseCaseImpl).singleton(),
     identityProvider: asClass(FirebaseAdminIdentityProvider).singleton(),
     userRepository: asClass(AuthUserRepositoryImpl).singleton(),
     createWebSessionUseCase: asClass(CreateWebSessionUseCaseImpl).singleton(),
@@ -156,4 +185,28 @@ export function resolveChangeAnnonceVisibilityUseCase(): ChangeAnnonceVisibility
 
 export function resolveGetOwnedAnnoncesUseCase(): GetOwnedAnnoncesUseCase {
   return getContainer().resolve("getOwnedAnnoncesUseCase");
+}
+
+export function resolveGetOwnedAnnonceForEditUseCase(): GetOwnedAnnonceForEditUseCase {
+  return getContainer().resolve("getOwnedAnnonceForEditUseCase");
+}
+
+export function resolveSetAnnonceFavoriteUseCase(): SetAnnonceFavoriteUseCase {
+  return getContainer().resolve("setAnnonceFavoriteUseCase");
+}
+
+export function resolveGetAnnonceFavoriteIdsUseCase(): GetAnnonceFavoriteIdsUseCase {
+  return getContainer().resolve("getAnnonceFavoriteIdsUseCase");
+}
+
+export function resolveGetFavoriteAnnoncesUseCase(): GetFavoriteAnnoncesUseCase {
+  return getContainer().resolve("getFavoriteAnnoncesUseCase");
+}
+
+export function resolveCreateAnnonceAffiliateLinkUseCase(): CreateAnnonceAffiliateLinkUseCase {
+  return getContainer().resolve("createAnnonceAffiliateLinkUseCase");
+}
+
+export function resolveGetAnnonceAffiliatePriceUseCase(): GetAnnonceAffiliatePriceUseCase {
+  return getContainer().resolve("getAnnonceAffiliatePriceUseCase");
 }

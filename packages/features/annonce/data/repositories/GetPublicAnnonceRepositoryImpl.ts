@@ -25,6 +25,7 @@ export class GetPublicAnnonceRepositoryImpl implements GetPublicAnnonceRepositor
         disponibilite: true,
         quartier: true,
         troc_accepte: true,
+        affiliation: { select: { active: true } },
         categorie_annonce_categorie_idTocategorie: {
           select: {
             id: true,
@@ -58,6 +59,7 @@ export class GetPublicAnnonceRepositoryImpl implements GetPublicAnnonceRepositor
       disponibilite: annonce.disponibilite,
       quartier: annonce.quartier,
       trocAccepte: annonce.troc_accepte,
+      affiliationDisponible: (annonce.affiliation?.active ?? false) && !annonce.troc_accepte && annonce.disponibilite === "DISPONIBLE",
       categorie: {
         id: annonce.categorie_annonce_categorie_idTocategorie.id,
         nom: annonce.categorie_annonce_categorie_idTocategorie.nom,

@@ -8,6 +8,13 @@ export const colors = {
   text: "var(--td-color-text)",
   textSecondary: "var(--td-color-text-secondary)",
   accent: "var(--td-color-accent)",
+  onAccent: "var(--td-color-on-accent)",
+  focus: "var(--td-color-focus)",
+  overlay: "var(--td-color-overlay)",
   error: "var(--td-color-error)",
   errorBackground: "var(--td-color-error-background)",
+  success: "var(--td-color-success)",
+  successBackground: "var(--td-color-success-background)",
+  warning: "var(--td-color-warning)",
+  warningBackground: "var(--td-color-warning-background)",
 } as const;

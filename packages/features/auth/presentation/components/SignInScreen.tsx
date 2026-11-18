@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, Input } from "@topdeal/ui";
+import { Button, Card, Input, useToast } from "@topdeal/ui";
 import type { SendEmailVerificationResult, SignInInput, SignInResult } from "../../core";
 import { ProfileCompletionScreen } from "./ProfileCompletionScreen";
 import { EmailVerificationScreen } from "./EmailVerificationScreen";
@@ -36,27 +36,30 @@ function getMessage(status: SignInResult["status"]): string | null {
 export function SignInScreen({ onSubmit, onSendEmailVerification, onCompleteEmailVerification, onCompleteProfile }: SignInScreenProps) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
+  const showToast = useToast();
 
   async function submit(input: SignInInput) {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    setErrorMessage(null);
     try {
       const result = await onSubmit(input);
       if (result.status === "profile_required") {
         setNeedsProfile(true);
+        showToast({ kind: "info", title: "Connexion reconnue", description: "Complétez votre profil pour accéder à TopDeal." });
         return;
       }
       if (result.status === "email_unverified") {
         setNeedsEmailVerification(true);
+        showToast({ kind: "info", title: "Vérification requise", description: "Confirmez votre adresse e-mail pour continuer." });
         return;
       }
-      setErrorMessage(getMessage(result.status));
+      const message = getMessage(result.status);
+      if (result.status === "authenticated") showToast({ kind: "success", title: "Connexion réussie" });
+      else if (message) showToast({ kind: "error", title: "Connexion impossible", description: message });
     } catch {
-      setErrorMessage("La connexion n’a pas abouti. Réessayez.");
+      showToast({ kind: "error", title: "Connexion impossible", description: "La connexion n’a pas abouti. Réessayez." });
     } finally {
       setIsSubmitting(false);
     }
@@ -107,8 +110,6 @@ export function SignInScreen({ onSubmit, onSendEmailVerification, onCompleteEmai
             <h1 className="text-[30px] leading-[1.2] font-semibold tracking-tight" id="sign-in-title">Connexion</h1>
             <p className="mt-1 text-text-secondary">Connectez-vous pour acheter, vendre et suivre vos commandes.</p>
           </header>
-
-          {errorMessage && <p className="mt-5 rounded-notice bg-error-background px-3 py-[11px] text-[13px] leading-[1.5] text-error" role="alert">{errorMessage}</p>}
 
           <Button className="mt-6 w-full" disabled={isSubmitting} onClick={() => void submit({ method: "google" })} variant="secondary">
             {isSubmitting ? "Connexion en cours…" : "Continuer avec Google"}

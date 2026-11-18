@@ -53,6 +53,9 @@ export class CreateAnnonceRepositoryImpl implements CreateAnnonceRepository {
             ordre,
           })),
         },
+        ...(record.affiliationActive && !record.trocAccepte
+          ? { affiliation: { create: { remuneration_fixe: record.remunerationAffiliation, active: true } } }
+          : {}),
       },
       select: { id: true },
     });
